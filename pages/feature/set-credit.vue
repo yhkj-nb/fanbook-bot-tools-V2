@@ -83,7 +83,7 @@ async function onSubmit() {
       content: '设置成功',
       duration: 2500,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
     //如果错误码在BotErrorCode中，则显示错误码对应的错误信息
     if (err.response?.data?.error_code in BotErrorCode) {
