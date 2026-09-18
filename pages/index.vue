@@ -4,7 +4,7 @@ import { Card, Row, TypographyTitle } from '@arco-design/web-vue';
 import {
   IconDelete,
   IconList,
-  IconRefresh,
+  IconMessage,
   IconRobot,
   IconStar,
 } from '@arco-design/web-vue/es/icon';
@@ -40,6 +40,15 @@ const features: Array<{
     }],
   },
   {
+    title: '机器人消息',
+    icon: <IconMessage />,
+    children: [{
+      icon: <IconMessage size={36} />,
+      content: '发送消息',
+      link: 'feature/send-message',
+    }],
+  },
+  {
     title: '荣誉卡槽',
     icon: <IconStar />,
     children: [{
@@ -54,10 +63,6 @@ const features: Array<{
       icon: <IconList size={36} />,
       content: '荣誉列表',
       link: 'feature/get-user-credit',
-    }, {
-      icon: <IconRefresh size={36} />,
-      content: '重新下发勋章',
-      link: 'feature/reissue-credit',
     }],
   },
 ];
