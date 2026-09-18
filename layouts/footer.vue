@@ -12,8 +12,11 @@ const data: FooterItem[] = [{
   label: 'Fanbook 开放平台',
   link: 'https://open.fanbook.mobi/',
 }, {
-  label: '代码仓库',
+  label: '原仓库',
   link: 'https://github.com/Starlight-Dev-Team/fanbook-bot-tools',
+}, {
+  label: '由 yhkj-nb 修改',
+  link: 'https://github.com/yhkj-nb/fanbook-bot-tools',
 }, {
   label: '关于',
   link: '/about',
