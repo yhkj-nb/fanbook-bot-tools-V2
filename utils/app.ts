@@ -5,6 +5,11 @@
 export const GITHUB_REPOSITORY_NAME = 'Starlight-Dev-Team/fanbook-bot-tools';
 export const GITHUB_REPOSITORY_URL = 'https://github.com/Starlight-Dev-Team/fanbook-bot-tools';
 
+/** 仓库 Fork（由 yhkj-nb 修改维护）名称。 */
+export const GITHUB_FORK_REPOSITORY_NAME = 'yhkj-nb/fanbook-bot-tools';
+/** 仓库 Fork（由 yhkj-nb 修改维护）地址。 */
+export const GITHUB_FORK_REPOSITORY_URL = 'https://github.com/yhkj-nb/fanbook-bot-tools';
+
 /** 版本信息数据模型。 */
 export interface VersionInfo {
   /** 版本 ID 。 */
@@ -23,7 +28,7 @@ export interface VersionInfo {
  * @returns 当前版本信息
  */
 export async function getVersionInfo(): Promise<VersionInfo> {
-  const url = 'https://api.github.com/repos/Starlight-Dev-Team/fanbook-bot-tools/branches/main';
+  const url = `https://api.github.com/repos/${GITHUB_FORK_REPOSITORY_NAME}/branches/main`;
   const res: any = (await useFetch(url, {
     method: 'get',
     mode: 'cors',
