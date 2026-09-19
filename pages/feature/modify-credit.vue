@@ -293,6 +293,58 @@ async function onSubmit() {
         >
           <Input v-model='input.credit.title.icon' />
         </FormItem>
+        <TypographyTitle :heading='4'>勋章预览</TypographyTitle>
+        <div class='credit-preview'>
+          <div class='preview-card'>
+            <div class='preview-header'>
+              <img
+                v-if='input.credit.authority.icon'
+                class='preview-header-icon'
+                :src='input.credit.authority.icon'
+                alt='标题栏图片'
+              >
+              <div
+                v-else
+                class='preview-header-icon'
+              />
+              <div class='preview-header-name'>
+                {{ input.credit.authority.name || '这是标题栏' }}
+              </div>
+            </div>
+            <div class='preview-body'>
+              <div
+                v-for='(slot, i) in (input.credit.slots?.[0] ?? [])'
+                :key='i'
+                class='preview-slot'
+              >
+                <img
+                  v-if='slot.image'
+                  class='preview-slot-img'
+                  :src='slot.image'
+                  :alt='slot.value'
+                >
+                <div class='preview-slot-value'>
+                  {{ slot.value || '这是插槽' }}
+                </div>
+              </div>
+              <div
+                v-if='!(input.credit.slots?.[0]?.length)'
+                class='preview-slot-value'
+              >
+                这是插槽
+              </div>
+            </div>
+          </div>
+          <div class='preview-nickname'>
+            <img
+              v-if='input.credit.title.icon'
+              class='preview-nick-icon'
+              :src='input.credit.title.icon'
+              alt='勋章图标'
+            >
+            <span class='preview-nick-text'>用户昵称（勋章显示在昵称左侧）</span>
+          </div>
+        </div>
         <FormItem class='operations'>
           <Button
             type='primary'
@@ -381,5 +433,74 @@ h4 {
 .credit-authority {
   margin-top: 4px;
   border-radius: 50%;
+}
+.credit-preview {
+  margin-bottom: 16px;
+}
+.preview-card {
+  padding: 16px;
+  border: 1px solid var(--color-border-2);
+  border-radius: 12px;
+  background: var(--color-bg-2);
+}
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.preview-header-icon {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--color-fill-2);
+}
+.preview-header-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-1);
+}
+.preview-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 96px;
+  margin-top: 12px;
+}
+.preview-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.preview-slot-img {
+  max-width: 100%;
+  max-height: 120px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+.preview-slot-value {
+  font-size: 16px;
+  color: var(--color-text-1);
+}
+.preview-nickname {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-left: 4px;
+}
+.preview-nick-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+.preview-nick-text {
+  font-size: 14px;
+  color: var(--color-text-2);
 }
 </style>
