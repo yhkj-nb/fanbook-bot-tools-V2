@@ -20,7 +20,7 @@ switch (typeof props.error) {
 }
 
 async function handleReportError() {
-  await navigateTo('https://github.com/Starlight-Dev-Team/fanbook-bot-tools/issues', {
+  await navigateTo('https://github.com/yhkj-nb/fanbook-bot-tools-V2/issues', {
     external: true,
   });
 }
