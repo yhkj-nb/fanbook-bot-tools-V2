@@ -16,7 +16,10 @@ const data: FooterItem[] = [{
   link: 'https://github.com/Starlight-Dev-Team/fanbook-bot-tools',
 }, {
   label: '由 yhkj-nb 修改',
-  link: 'https://github.com/yhkj-nb/fanbook-bot-tools',
+  link: 'https://github.com/yhkj-nb/fanbook-bot-tools-V2',
+}, {
+  label: 'QQ 群',
+  link: 'https://yhkj-nb.github.io/QQ.html',
 }, {
   label: '关于',
   link: '/about',
