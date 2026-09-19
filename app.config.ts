@@ -20,7 +20,7 @@ const config: AppConfig = {
   announcements: [{
     type: 'info',
     title: '欢迎加入机器人工具 Fanbook 服务器',
-    link: 'https://fanbook.mobi/rjCNRFUN',
+    link: 'https://in.fanbook.cn/iWeiaF4B',
   }],
 };
 
