@@ -28,7 +28,7 @@ import {
     <TypographyParagraph>
       本仓库由
       <Link
-        href='https://github.com/yhkj-nb/fanbook-bot-tools'
+        href='https://github.com/yhkj-nb/fanbook-bot-tools-V2'
         :hoverable='false'
       >
         yhkj-nb
