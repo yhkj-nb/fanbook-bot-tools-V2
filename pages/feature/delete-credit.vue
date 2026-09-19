@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import { IconRefresh } from '@arco-design/web-vue/es/icon';
 
-import { nanoid } from 'nanoid';
-
 import { Bot } from '@starlight-dev-team/fanbook-api-sdk';
 import type {
   GuildCredit,
@@ -10,16 +8,14 @@ import type {
 
 import { useAccountStore } from '~~/stores/account';
 
-import { tryBigintify } from '~~/utils/util';
-
 import {
   Button,
   Form,
   FormItem,
-  Input,
   Message,
-  TypographyTitle,
   Spin,
+  Select,
+  Option,
 } from '@arco-design/web-vue';
 import type { FieldRule } from '@arco-design/web-vue';
 
@@ -42,14 +38,56 @@ const REQUEIRE_RULE: FieldRule = {
   message: '本项必填',
 };
 
-type Status = 'default' | 'loading';
+type Status = 'default' | 'loading' | 'fetching';
 const status = ref('default' as Status);
 
 const bot = new Bot(useAccountStore().activeBotToken as string);
 
+/** 该用户的全部徽章，用于下拉选择。 */
+const credits = ref([] as GuildCredit[]);
+
+/** 拉取用户全部徽章，填充下拉选项。 */
+async function fetchCredits() {
+  if (!input.guild || !input.user) {
+    Message.warning({
+      content: '请先填写服务器与用户',
+      duration: 2500,
+    });
+    return;
+  }
+  status.value = 'fetching';
+  try {
+    const res = await bot.getGuildUserCredit({
+      guild: input.guild as bigint,
+      user: input.user as bigint,
+    });
+    credits.value = res;
+    if (res.length === 0) {
+      Message.info({
+        content: '该用户暂无任何勋章',
+        duration: 3000,
+      });
+    }
+  } catch (err: any) {
+    console.error(err);
+    Message.error({
+      content: '获取勋章失败：' + (err.response?.data?.description ?? '未知错误'),
+      duration: 6000,
+    });
+  }
+  status.value = 'default';
+}
+
+// 服务器 ID 与用户 ID（短 ID 解析后的完整 ID）都就绪后自动拉取
+watch(
+  () => [input.guild, input.user],
+  ([g, u]) => {
+    if (g && u) fetchCredits();
+  },
+);
+
 async function onSubmit() {
   status.value = 'loading';
-  let user: bigint;
   try {
     await bot.deleteGuildUserCredit({
       guild: input.guild as bigint,
@@ -60,10 +98,13 @@ async function onSubmit() {
       content: '删除成功',
       duration: 2500,
     });
-  } catch (err) {
+    input.card = '';
+    // 重新拉取，刷新下拉列表
+    await fetchCredits();
+  } catch (err: any) {
     console.error(err);
     Message.error({
-      content: '删除失败',
+      content: '删除失败：' + (err.response?.data?.description ?? '未知错误'),
       duration: 6000,
     });
   }
@@ -72,7 +113,11 @@ async function onSubmit() {
 </script>
 
 <template>
-  <Spin class='form-wrapper' :loading='status === "loading"' tip='正在执行'>
+  <Spin
+    class='form-wrapper'
+    :loading='status === "loading"'
+    tip='正在执行'
+  >
     <Form
       class='form'
       :model='input'
@@ -91,16 +136,48 @@ async function onSubmit() {
         field='user'
         required
       />
+
+      <FormItem class='operations'>
+        <Button
+          :loading='status === "fetching"'
+          @click='fetchCredits'
+        >
+          <template #icon>
+            <IconRefresh />
+          </template>
+          获取用户徽章
+        </Button>
+      </FormItem>
+
       <FormItem
         label='自定义 ID'
         field='card'
-        tooltip='对应设置荣誉卡槽时，填写的的自定义 ID'
+        tooltip='点击下拉选择要删除的勋章（已自动拉取该用户全部徽章）'
         :rules='[REQUEIRE_RULE, { minLength: 10, message: "至少10字符" }]'
       >
-        <Input v-model='input.card' />
+        <Select
+          v-model='input.card'
+          placeholder='请选择要删除的勋章'
+          allow-search
+          :loading='status === "fetching"'
+          @focus='() => { if (!credits.length) fetchCredits(); }'
+        >
+          <Option
+            v-for='c in credits'
+            :key='c.id'
+            :value='c.id'
+            :label='c.authority?.name || c.id'
+          >
+            {{ c.authority?.name || '未命名勋章' }}（{{ c.id }}）
+          </Option>
+        </Select>
       </FormItem>
+
       <FormItem class='operations'>
-        <Button type='primary' html-type='submit'>
+        <Button
+          type='primary'
+          html-type='submit'
+        >
           删除荣誉卡槽
         </Button>
       </FormItem>
