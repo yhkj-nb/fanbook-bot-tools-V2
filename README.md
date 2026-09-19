@@ -1,6 +1,6 @@
 # Fanbook 机器人工具
 
-> 本仓库由 **yhkj-nb** 在原项目 [Starlight-Dev-Team/fanbook-bot-tools](https://github.com/Starlight-Dev-Team/fanbook-bot-tools) 基础上修改维护。
+> 本仓库由 **yhkj-nb** 在原项目 [Starlight-Dev-Team/fanbook-bot-tools](https://github.com/Starlight-Dev-Team/fanbook-bot-tools) 基础上修改维护：<https://github.com/yhkj-nb/fanbook-bot-tools-V2>
 
 Fanbook 机器人管理工具，基于 Nuxt 3 + Vue 3 + Arco Design Vue 构建。
 
