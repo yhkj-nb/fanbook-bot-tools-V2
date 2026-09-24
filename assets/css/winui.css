@@ -1,0 +1,201 @@
+/* ============================================================
+ * WinUI 3 / Fluent Design 主题（网页版）
+ * 仅做视觉层覆盖，不改变组件结构，兼容 Arco Design Vue。
+ * ============================================================ */
+
+:root {
+  /* Fluent 蓝强调色（覆盖 Arco 默认蓝） */
+  --primary-1: 229, 242, 250;
+  --primary-2: 199, 224, 245;
+  --primary-3: 158, 199, 238;
+  --primary-4: 92, 168, 228;
+  --primary-5: 38, 145, 220;
+  --primary-6: 0, 120, 212;   /* #0078D4 */
+  --primary-7: 0, 103, 184;
+  --primary-light-1: 38, 145, 220;
+  --primary-light-2: 92, 168, 228;
+  --primary-light-3: 199, 224, 245;
+  --primary-light-4: 229, 242, 250;
+  --primary-light-5: 242, 248, 252;
+  --primary-light-6: 248, 251, 253;
+
+  /* 文本与描边（Fluent 中性灰） */
+  --color-text-1: #1b1b1b;
+  --color-text-2: #424242;
+  --color-text-3: #6e6e6e;
+  --color-text-4: #9a9a9a;
+  --color-border-1: #e5e5e5;
+  --color-border-2: #d6d6d6;
+  --color-fill-1: #f5f5f5;
+  --color-fill-2: #ececec;
+  --color-bg-1: #ffffff;
+  --color-bg-2: #fafafa;
+  --color-bg-3: #f3f3f3;
+
+  /* 主题变量 */
+  --winui-accent: #0078d4;
+  --winui-radius-card: 8px;
+  --winui-radius-control: 4px;
+  --winui-shadow-1: 0 2px 8px rgba(0, 0, 0, .08);
+  --winui-shadow-2: 0 8px 24px rgba(0, 0, 0, .12);
+  --winui-font: 'Segoe UI Variable', 'Segoe UI', 'Microsoft YaHei UI',
+    system-ui, -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+/* 字体与 Mica 浅色背景 */
+html,
+body {
+  font-family: var(--winui-font) !important;
+  background: #f3f3f3;
+  background-image:
+    radial-gradient(1200px 600px at 100% -10%, rgba(0, 120, 212, .06), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(0, 120, 212, .05), transparent 60%);
+  color: var(--color-text-1);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 标题统一用 Segoe */
+h1, h2, h3, h4, h5, h6,
+.arco-typography,
+.arco-btn,
+.arco-input,
+.arco-select {
+  font-family: var(--winui-font) !important;
+}
+
+/* ---------- 卡片（表单容器） ---------- */
+.form-wrapper {
+  display: block;
+  width: 70%;
+  margin: 16px auto 24px;
+  padding: 24px 28px;
+  background: #ffffff;
+  border: 1px solid var(--color-border-1);
+  border-radius: var(--winui-radius-card);
+  box-shadow: var(--winui-shadow-1);
+}
+body.mobile .form-wrapper {
+  width: 90vw;
+  padding: 16px;
+}
+
+/* 通用 Fluent 卡片 */
+.winui-card,
+.arco-card {
+  border-radius: var(--winui-radius-card) !important;
+  box-shadow: var(--winui-shadow-1) !important;
+  border: 1px solid var(--color-border-1) !important;
+}
+
+/* ---------- 按钮（Fluent） ---------- */
+.arco-btn {
+  border-radius: var(--winui-radius-control) !important;
+  font-weight: 600;
+  transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease;
+}
+.arco-btn:not(.arco-btn-text):not(.arco-btn-primary):hover {
+  background-color: #f3f3f3;
+}
+.arco-btn-primary {
+  background-color: var(--winui-accent) !important;
+  border-color: var(--winui-accent) !important;
+}
+.arco-btn-primary:hover {
+  background-color: #1a86dc !important;
+  border-color: #1a86dc !important;
+}
+.arco-btn-primary:active {
+  background-color: #0067b8 !important;
+  transform: translateY(1px);
+}
+.arco-btn-text[type='primary'],
+.arco-btn-text.arco-btn-primary {
+  color: var(--winui-accent) !important;
+}
+
+/* ---------- 输入框 / 选择器（Fluent） ---------- */
+.arco-input-wrapper,
+.arco-select-view,
+.arco-textarea-wrapper {
+  border-radius: var(--winui-radius-control) !important;
+}
+.arco-input-wrapper:focus-within,
+.arco-select-view.arco-select-view-focus {
+  border-color: var(--winui-accent) !important;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, .18) !important;
+}
+
+/* ---------- 徽章卡片（荣誉卡槽网格） ---------- */
+.credit-card {
+  border-radius: var(--winui-radius-card) !important;
+  box-shadow: var(--winui-shadow-1);
+  background: #ffffff !important;
+}
+.credit-card:hover {
+  box-shadow: var(--winui-shadow-2);
+}
+.credit-card.active {
+  border-color: var(--winui-accent) !important;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, .2) !important;
+}
+
+/* 预览卡片 */
+.preview-card {
+  border-radius: var(--winui-radius-card) !important;
+  box-shadow: var(--winui-shadow-1);
+}
+
+/* 区块标题：Fluent 风格细分隔线 */
+h4 {
+  font-weight: 600;
+  letter-spacing: .2px;
+}
+
+/* 顶部水印 */
+.brand-watermark {
+  position: fixed;
+  top: 8px;
+  left: 12px;
+  z-index: 9999;
+  padding: 2px 10px;
+  font-family: var(--winui-font);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  color: #0078d4;
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(0, 120, 212, .25);
+  border-radius: 4px;
+  opacity: .55;
+  pointer-events: none;
+  user-select: none;
+  backdrop-filter: blur(2px);
+}
+
+/* 用户搜索结果下拉项 */
+.user-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.user-search-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-search-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--color-fill-2);
+}
+.user-search-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.user-search-id {
+  font-size: 11px;
+  color: var(--color-text-3);
+}
