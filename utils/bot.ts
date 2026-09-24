@@ -1,6 +1,16 @@
 import { Bot } from '@starlight-dev-team/fanbook-api-sdk';
 
+import jsonBigint from 'json-bigint';
+
 import useAccountStore from '~~/stores/account';
+
+/**
+ * 与 SDK 一致的 JSON 解析器（保留大整数精度）。
+ * 雪崩 ID 是 18 位十进制，超过 JS 安全整数 2^53，浏览器原生 JSON.parse 会丢失精度
+ * （如 798431668825604096 -> 798431668825604100），导致拿到的用户长 ID 错误、
+ * 进而 getGuildUserCredit 等接口查不到用户。故搜索结果必须用 json-bigint 解析。
+ */
+const bigintParser = jsonBigint({ useNativeBigInt: true });
 
 let currentBot: Bot | undefined;
 export function getCurrentBot(): Bot {
@@ -71,7 +81,16 @@ export async function searchGuildMembers(
         headers: { 'Content-Type': 'application/json' },
         body,
       });
-      return await res.json();
+      const text = await res.text();
+      try {
+        return bigintParser.parse(text);
+      } catch {
+        try {
+          return JSON.parse(text);
+        } catch {
+          return null;
+        }
+      }
     } catch {
       return null;
     }
