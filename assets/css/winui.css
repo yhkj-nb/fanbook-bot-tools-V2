@@ -141,6 +141,7 @@ body.mobile .form-wrapper {
 
 /* 预览卡片 */
 .preview-card {
+  position: relative;
   border-radius: var(--winui-radius-card) !important;
   box-shadow: var(--winui-shadow-1);
 }
@@ -151,31 +152,24 @@ h4 {
   letter-spacing: .2px;
 }
 
-/* 品牌水印（固定右下角，避免遮挡页面标题与返回按钮） */
-.brand-watermark {
-  position: fixed;
-  right: 12px;
-  bottom: 76px;
-  z-index: 40;
-  padding: 2px 10px;
+/* 预览图上的品牌水印（角标，不遮挡内容） */
+.preview-watermark {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  z-index: 2;
+  padding: 1px 8px;
   font-family: var(--winui-font);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: .5px;
   color: #0078d4;
-  background: rgba(255, 255, 255, .5);
+  background: rgba(255, 255, 255, .55);
   border: 1px solid rgba(0, 120, 212, .2);
   border-radius: 4px;
-  opacity: .45;
+  opacity: .5;
   pointer-events: none;
   user-select: none;
-  backdrop-filter: blur(2px);
-}
-@media (max-width: 640px) {
-  .brand-watermark {
-    bottom: 88px;
-    font-size: 11px;
-  }
 }
 
 /* 用户搜索结果下拉项 */
