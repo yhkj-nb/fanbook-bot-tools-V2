@@ -335,6 +335,7 @@ async function onSubmit() {
                 这是插槽
               </div>
             </div>
+            <div class='preview-watermark'>@云痕科技</div>
           </div>
           <div class='preview-nickname'>
             <img
