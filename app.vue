@@ -8,11 +8,14 @@ import '@arco-design/web-vue/dist/arco.css';
 
 import { checkAuth } from './middleware/guard.global';
 checkAuth(useRoute());
+
+/** 浏览器标签页标题带上当前部署版本号，方便通过标签区分部署版本。 */
+const titleText = `Fanbook 机器人工具 · ${useAppConfig().buildCommit || ''}`;
 </script>
 
 <template>
   <Teleport to='head'>
-    <title>Fanbook 机器人工具</title>
+    <title>{{ titleText }}</title>
   </Teleport>
   <LayoutHeader>
     <NuxtLayout name='header' />
