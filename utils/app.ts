@@ -23,6 +23,15 @@ export interface VersionInfo {
   /** 更新说明。 */
   message: string;
 }
+
+/** 维护者展示名（GitHub 登录名 → 展示名）。 */
+const AUTHOR_DISPLAY_NAME: Record<string, string> = {
+  'yhkj-nb': '云痕科技（yhkj-nb）',
+};
+
+/** 默认维护者展示名。 */
+export const MAINTAINER_NAME = '云痕科技';
+
 /**
  * 获取版本信息。
  * @returns 当前版本信息
@@ -33,9 +42,10 @@ export async function getVersionInfo(): Promise<VersionInfo> {
     method: 'get',
     mode: 'cors',
   })).data.value;
+  const login = res.commit.author.login as string;
   return {
     id: (res.commit.sha as string).slice(0, 7),
-    author: res.commit.author.login as string,
+    author: AUTHOR_DISPLAY_NAME[login] ?? login,
     verified: res.commit.commit.verification.verified === true,
     time: new Date(res.commit.commit.author.date as string),
     message: res.commit.commit.message,
