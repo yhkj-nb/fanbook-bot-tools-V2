@@ -1,6 +1,15 @@
 <script lang="ts" setup>
-import { FormItem } from '@arco-design/web-vue';
+import {
+  Button,
+  FormItem,
+  Input,
+  Message,
+  Option,
+  Select,
+} from '@arco-design/web-vue';
 import type { FieldRule } from '@arco-design/web-vue';
+
+import { searchGuildMembers, type SearchedUser } from '~/utils/bot';
 
 export type RuleType = FieldRule<bigint | undefined>;
 export interface Props {
@@ -33,6 +42,12 @@ const status = ref(undefined as Status);
 /** 是否为错误的输入。 */
 const badInput = ref(false);
 
+/** 用户名搜索。 */
+const searchQuery = ref('');
+const searching = ref(false);
+const results = ref([] as SearchedUser[]);
+const picked = ref('');
+
 /** 合并属性到 rules 中。 */
 function wrapRules(rules: RuleType[]): RuleType[] {
   const result = [ ...rules ];
@@ -55,6 +70,39 @@ function onError() {
   badInput.value = true;
   status.value = 'error';
 }
+
+/** 按用户名 / 昵称搜索服务器成员。 */
+async function searchUsers() {
+  const q = searchQuery.value.trim();
+  if (!q) {
+    Message.warning({ content: '请输入用户名或昵称', duration: 2000 });
+    return;
+  }
+  if (!props.guild) {
+    Message.warning({ content: '请先填写服务器 ID', duration: 2500 });
+    return;
+  }
+  searching.value = true;
+  try {
+    const list = await searchGuildMembers(props.guild, q);
+    results.value = list;
+    if (list.length === 0) {
+      Message.info({ content: '未找到匹配的用户', duration: 3000 });
+    }
+  } catch {
+    Message.error({ content: '搜索失败，请稍后重试', duration: 3000 });
+  }
+  searching.value = false;
+}
+
+/** 从搜索结果中选中某个用户，自动填入用户 ID。 */
+function onPick(val: any) {
+  const id = String(val ?? '');
+  if (!id) return;
+  input.value = id;
+  onChange(BigInt(id));
+  searchQuery.value = '';
+}
 </script>
 
 <template>
@@ -76,5 +124,47 @@ function onError() {
       @change='onChange'
       @error='onError'
     />
+
+    <!-- 按用户名搜索用户 -->
+    <div class='user-search'>
+      <Input
+        v-model='searchQuery'
+        placeholder='输入用户名 / 昵称搜索用户'
+        allow-clear
+        @press-enter='searchUsers'
+      />
+      <Button
+        type='primary'
+        :loading='searching'
+        @click='searchUsers'
+      >
+        搜索
+      </Button>
+    </div>
+    <Select
+      v-if='results.length'
+      v-model='picked'
+      placeholder='选择用户（自动填入用户 ID）'
+      @change='onPick'
+    >
+      <Option
+        v-for='u in results'
+        :key='u.id'
+        :value='u.id'
+      >
+        <span class='user-search-result'>
+          <img
+            v-if='u.avatar'
+            class='user-search-avatar'
+            :src='u.avatar'
+            :alt='u.name'
+          >
+          <span class='user-search-meta'>
+            <span>{{ u.name }}</span>
+            <span class='user-search-id'>{{ u.id }}</span>
+          </span>
+        </span>
+      </Option>
+    </Select>
   </FormItem>
 </template>
