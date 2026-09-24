@@ -53,12 +53,15 @@ export async function searchGuildMembers(
   const token = useAccountStore().activeBotToken;
   if (!token) return [];
   const base = `https://a1.fanbook.cn/api/bot/${token}`;
+  // 雪崩 ID 一律以字符串传输：BigInt 无法被 JSON.stringify 序列化（会抛 TypeError 导致请求被吞），
+  // 且超过 Number.MAX_SAFE_INTEGER (2^53) 时转 Number 会丢精度。与「FB 用户搜索工具」的 int 等价但更安全。
+  const guildId = String(guild);
   const post = async (path: string, body: Record<string, unknown>) => {
     try {
       const res = await fetch(`${base}/${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(body, (_k, v) => typeof v === 'bigint' ? v.toString() : v),
       });
       return await res.json();
     } catch {
@@ -67,23 +70,24 @@ export async function searchGuildMembers(
   };
 
   const [byName, byQuery] = await Promise.all([
-    post('searchGuildMemberByName', { guild_id: guild, username: [query] }),
-    post('searchGuildMember', { guild_id: guild, query }),
+    post('searchGuildMemberByName', { guild_id: guildId, username: [query] }),
+    post('searchGuildMember', { guild_id: guildId, query }),
   ]);
 
+  // 兼容两种返回结构：{ result: [{ user: {...} }] } 或 { result: [{...}] }（user 本身）
   const map = new Map<string, SearchedUser>();
   for (const src of [byName, byQuery]) {
-    if (src?.ok && Array.isArray(src.result)) {
-      for (const item of src.result) {
-        const u = item?.user;
-        if (!u?.id) continue;
-        map.set(String(u.id), {
-          id: String(u.id),
-          name: u.first_name || u.username || '未知用户',
-          username: u.username || '',
-          avatar: u.avatar || '',
-        });
-      }
+    const result = src?.result;
+    if (!Array.isArray(result)) continue;
+    for (const item of result) {
+      const u = item?.user ?? item;
+      if (!u?.id) continue;
+      map.set(String(u.id), {
+        id: String(u.id),
+        name: u.first_name || u.username || '未知用户',
+        username: u.username || '',
+        avatar: u.avatar || '',
+      });
     }
   }
   return [...map.values()];
