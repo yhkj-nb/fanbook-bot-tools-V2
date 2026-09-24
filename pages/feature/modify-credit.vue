@@ -107,7 +107,8 @@ async function fetchCredits() {
 /** 点击某个徽章，将其完整数据载入编辑表单。 */
 function selectCredit(c: GuildCredit) {
   selectedId.value = c.id;
-  input.credit = JSON.parse(JSON.stringify(c));
+  // 就地更新，避免替换 input.credit 引用导致 Arco Form 字段绑定 / 校验失效
+  Object.assign(input.credit, JSON.parse(JSON.stringify(c)));
   // 保证插槽结构存在，便于编辑
   if (!input.credit.slots || input.credit.slots.length === 0) {
     input.credit.slots = [[{ image: '', value: '' }]];
