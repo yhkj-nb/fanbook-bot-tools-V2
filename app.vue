@@ -14,7 +14,6 @@ checkAuth(useRoute());
   <Teleport to='head'>
     <title>Fanbook 机器人工具</title>
   </Teleport>
-  <div class='brand-watermark'>@云痕科技</div>
   <LayoutHeader>
     <NuxtLayout name='header' />
   </LayoutHeader>
