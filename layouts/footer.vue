@@ -18,7 +18,7 @@ const repositoryLinks: FooterItem[] = [{
   label: '原仓库',
   link: 'https://github.com/Starlight-Dev-Team/fanbook-bot-tools',
 }, {
-  label: '由 yhkj-nb 修改',
+  label: '由云痕科技修改',
   link: 'https://github.com/yhkj-nb/fanbook-bot-tools-V2',
 }, {
   label: '关于',
@@ -74,6 +74,9 @@ const repositoryLinks: FooterItem[] = [{
       </AppLink>
       ，Copyright &copy; 2023 星光工作室
     </TypographyText>
+    <TypographyText class='footer-copy footer-copy--brand'>
+      本版本由云痕科技（yhkj-nb）二次开发维护
+    </TypographyText>
   </div>
 </template>
 
@@ -107,5 +110,9 @@ const repositoryLinks: FooterItem[] = [{
   font-size: 12px;
   color: var(--color-text-3);
   text-align: center;
+}
+.footer-copy--brand {
+  color: var(--winui-accent, #0078d4);
+  font-weight: 600;
 }
 </style>
