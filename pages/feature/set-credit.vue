@@ -204,15 +204,16 @@ async function onSubmit() {
                 {{ slot.value || '这是插槽' }}
               </div>
             </div>
-            <div
-              v-if='!(input.credit.slots?.[0]?.length)'
-              class='preview-slot-value'
-            >
-              这是插槽
+              <div
+                v-if='!(input.credit.slots?.[0]?.length)'
+                class='preview-slot-value'
+              >
+                这是插槽
+              </div>
             </div>
+            <div class='preview-watermark'>@云痕科技</div>
           </div>
-        </div>
-        <div class='preview-nickname'>
+          <div class='preview-nickname'>
           <img
             v-if='input.credit.title.icon'
             class='preview-nick-icon'
