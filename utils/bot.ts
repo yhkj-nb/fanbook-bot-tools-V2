@@ -53,15 +53,23 @@ export async function searchGuildMembers(
   const token = useAccountStore().activeBotToken;
   if (!token) return [];
   const base = `https://a1.fanbook.cn/api/bot/${token}`;
-  // 雪崩 ID 一律以字符串传输：BigInt 无法被 JSON.stringify 序列化（会抛 TypeError 导致请求被吞），
-  // 且超过 Number.MAX_SAFE_INTEGER (2^53) 时转 Number 会丢精度。与「FB 用户搜索工具」的 int 等价但更安全。
-  const guildId = String(guild);
-  const post = async (path: string, body: Record<string, unknown>) => {
+  /**
+   * 手动拼 JSON 发请求。
+   * 关键：Fanbook 要求 guild_id 为 JSON 数字（传字符串会返回 "Body contents error"），
+   * 而雪崩 ID 超过 2^53，用 Number 会丢精度、BigInt 又无法被 JSON.stringify 直接序列化。
+   * 故把 guild_id 以 BigInt.toString()（精确十进制）作为裸数字拼入，其余字段正常 JSON 序列化。
+   */
+  const post = async (path: string, extra: Record<string, unknown>) => {
+    const fields = [`"guild_id":${guild.toString()}`];
+    for (const [k, v] of Object.entries(extra)) {
+      fields.push(`${JSON.stringify(k)}:${JSON.stringify(v)}`);
+    }
+    const body = `{${fields.join(',')}}`;
     try {
       const res = await fetch(`${base}/${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body, (_k, v) => typeof v === 'bigint' ? v.toString() : v),
+        body,
       });
       return await res.json();
     } catch {
@@ -70,8 +78,8 @@ export async function searchGuildMembers(
   };
 
   const [byName, byQuery] = await Promise.all([
-    post('searchGuildMemberByName', { guild_id: guildId, username: [query] }),
-    post('searchGuildMember', { guild_id: guildId, query }),
+    post('searchGuildMemberByName', { username: [query] }),
+    post('searchGuildMember', { query }),
   ]);
 
   // 兼容两种返回结构：{ result: [{ user: {...} }] } 或 { result: [{...}] }（user 本身）
