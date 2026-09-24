@@ -1,8 +1,5 @@
 <script lang="ts" setup>
-import {
-  Divider,
-  TypographyText,
-} from '@arco-design/web-vue';
+import { TypographyText } from '@arco-design/web-vue';
 
 export interface FooterItem {
   label: string;
@@ -16,7 +13,7 @@ const communityLinks: FooterItem[] = [{
   label: 'QQ 群',
   link: 'https://yhkj-nb.github.io/QQ.html',
 }];
-/** 仓库 / 项目相关链接（用连接符归在一起）。 */
+/** 仓库 / 项目相关链接（用连接符串在一起）。 */
 const repositoryLinks: FooterItem[] = [{
   label: '原仓库',
   link: 'https://github.com/Starlight-Dev-Team/fanbook-bot-tools',
@@ -33,43 +30,82 @@ const repositoryLinks: FooterItem[] = [{
 </script>
 
 <template>
-  <div class='footer-links'>
-    <TypographyText>
-      <TypographyText v-for='(item, index) in communityLinks'>
-        <Divider v-if='!!index' direction='vertical' />
-        <AppLink :to='item.link'>
+  <div class='footer'>
+    <div class='footer-links'>
+      <template
+        v-for='(item, index) in communityLinks'
+        :key='item.link'
+      >
+        <span
+          v-if='index'
+          class='footer-sep'
+        >·</span>
+        <AppLink
+          :to='item.link'
+          class='footer-link'
+        >
           {{ item.label }}
         </AppLink>
-      </TypographyText>
-    </TypographyText>
-    <Divider direction='horizontal' />
-    <TypographyText>
-      <TypographyText v-for='(item, index) in repositoryLinks'>
-        <Divider v-if='!!index' direction='vertical' />
-        <AppLink :to='item.link'>
+      </template>
+      <span class='footer-sep footer-sep--group'>|</span>
+      <template
+        v-for='(item, index) in repositoryLinks'
+        :key='item.link'
+      >
+        <span
+          v-if='index'
+          class='footer-sep'
+        >|</span>
+        <AppLink
+          :to='item.link'
+          class='footer-link'
+        >
           {{ item.label }}
         </AppLink>
-      </TypographyText>
+      </template>
+    </div>
+    <TypographyText class='footer-copy'>
+      Released under
+      <AppLink
+        to='https://opensource.org/license/mit/'
+        :hoverable='false'
+      >
+        MIT License
+      </AppLink>
+      ，Copyright &copy; 2023 星光工作室
     </TypographyText>
   </div>
-  <TypographyText>
-    Released under
-    <AppLink to='https://opensource.org/license/mit/' :hoverable='false'>
-      MIT License
-    </AppLink>
-    <ClientOnly>
-      <template v-if='$device === "desktop"'>,</template>
-      <template v-else><br /></template>
-    </ClientOnly>
-    Copyright &copy; 2023 星光工作室
-  </TypographyText>
 </template>
 
 <style scoped>
-span.arco-typography:deep() {
-  text-align: center;
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
 }
 .footer-links {
-  margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+}
+.footer-link {
+  white-space: nowrap;
+}
+.footer-sep {
+  color: var(--color-text-3);
+  user-select: none;
+}
+.footer-sep--group {
+  color: var(--color-text-2);
+  margin: 0 2px;
+}
+.footer-copy {
+  font-size: 12px;
+  color: var(--color-text-3);
+  text-align: center;
 }
 </style>
