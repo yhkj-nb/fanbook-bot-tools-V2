@@ -117,7 +117,6 @@ function onPick(id: string | number | boolean) {
 async function resolveInput() {
   const query = text.value.trim();
   if (!query) {
-    Message.warning({ content: '请输入用户名 / 昵称，或直接填写用户 ID', duration: 2500 });
     status.value = 'error';
     hint.value = '请输入用户名 / 昵称，或直接填写用户 ID';
     return;
@@ -134,7 +133,8 @@ async function resolveInput() {
     return;
   }
   if (!props.guild) {
-    Message.warning({ content: '请先填写服务器 ID', duration: 2500 });
+    status.value = 'error';
+    hint.value = '请先填写服务器 ID';
     return;
   }
   searching.value = true;
@@ -206,6 +206,7 @@ async function resolveInput() {
       v-if='results.length > 1'
       class='user-search-select'
       placeholder='选择用户（自动填入用户 ID）'
+      allow-search
       @change='onPick'
     >
       <Option
@@ -251,6 +252,13 @@ async function resolveInput() {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
+}
+.user-search :deep(.arco-input-wrapper) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.user-search :deep(.arco-btn) {
+  flex: none;
 }
 .user-search-select {
   margin-bottom: 8px;
