@@ -31,7 +31,7 @@ import {
         href='https://github.com/yhkj-nb/fanbook-bot-tools-V2'
         :hoverable='false'
       >
-        yhkj-nb
+        云痕科技（yhkj-nb）
       </Link>
       在原项目基础上修改维护，原项目地址见
       <Link
