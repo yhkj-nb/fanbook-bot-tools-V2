@@ -71,7 +71,11 @@ function wrapRules(rules: RuleType[]): RuleType[] {
 }
 const rules = wrapRules(props.rules);
 
-/** 确认并写入用户 ID 。 */
+/** 选中后展示用的 ID：优先短 ID（username），无则退回长 ID。 */
+function displayId(u?: SearchedUser, fallback?: bigint): string {
+  return u?.username || (fallback !== undefined ? String(fallback) : '');
+}
+/** 确认并写入用户。展示用短 ID（username），底层仍用长 ID（id）调用荣誉卡槽等 API。 */
 function setUser(id: bigint, user?: SearchedUser) {
   picked.value = user ?? {
     id: String(id),
@@ -79,18 +83,18 @@ function setUser(id: bigint, user?: SearchedUser) {
     username: '',
     avatar: '',
   };
-  text.value = String(id);
+  text.value = displayId(user, id);
   results.value = [];
   hint.value = '';
   status.value = 'success';
   emit('update:model-value', id);
 }
 
-/** 输入变化：与已确认的用户 ID 不一致时作废当前选择。 */
+/** 输入变化：与已确认展示的 ID（短 ID）不一致时作废当前选择。 */
 function onInput(v: string) {
   text.value = v;
   const value = v.trim();
-  if (picked.value && value !== picked.value.id) {
+  if (picked.value && value !== displayId(picked.value)) {
     picked.value = undefined;
     results.value = [];
     emit('update:model-value', undefined);
@@ -223,7 +227,7 @@ async function resolveInput() {
           >
           <span class='user-search-meta'>
             <span>{{ u.name }}</span>
-            <span class='user-search-id'>{{ u.id }}</span>
+            <span class='user-search-id'>{{ u.username || u.id }}</span>
           </span>
         </span>
       </Option>
@@ -238,7 +242,7 @@ async function resolveInput() {
         :alt='picked.name'
       >
       <span class='user-picked-name'>{{ picked.name || '已选择用户' }}</span>
-      <span class='user-picked-id'>#{{ picked.id }}</span>
+      <span class='user-picked-id'>#{{ picked.username || picked.id }}</span>
       <a class='user-picked-clear' @click='onInput("")'>清除</a>
     </div>
     <div v-else-if='hint' class='user-hint'>
