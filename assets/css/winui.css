@@ -79,6 +79,37 @@ body.mobile .form-wrapper {
   padding: 16px;
 }
 
+/* ---------- 响应式适配：电脑端 / 平板 / 手机端（所有页面统一） ---------- */
+/* 桌面端：内容容器限制最大宽度并居中，避免超宽屏下被拉伸到 1300px+ 难以阅读。
+   用 !important 覆盖各页面 scoped 里写死的 width:70% / width:70vw。 */
+.form-wrapper,
+.form,
+article {
+  width: min(880px, 92%) !important;
+  max-width: 880px !important;
+  box-sizing: border-box !important;
+}
+/* 手机端 / 窄屏：占满可用宽度并保留安全边距，不再限制最大宽度。
+   基于视口宽度的媒体查询，同时覆盖真机（body.mobile）与窗口缩放 / 平板场景。 */
+@media (max-width: 768px) {
+  .form-wrapper,
+  .form,
+  article {
+    width: 92vw !important;
+    max-width: 100% !important;
+  }
+}
+/* 首页功能入口卡片：窄屏下允许换行并居中，固定 96px 不收缩 */
+@media (max-width: 768px) {
+  .home-card {
+    flex: 0 0 auto !important;
+  }
+  .home .arco-row {
+    flex-wrap: wrap !important;
+    justify-content: center;
+  }
+}
+
 /* 通用 Fluent 卡片 */
 .winui-card,
 .arco-card {
