@@ -1,0 +1,8 @@
+{
+  // 阿里云 ESA「函数和 Pages」静态托管配置（纯静态 SPA）
+  // 输出目录指向 Nuxt generate 产物，并开启 SPA 回退，保证客户端路由不 404
+  "assets": {
+    "directory": ".output/public",
+    "notFoundStrategy": "singlePageApplication"
+  }
+}
