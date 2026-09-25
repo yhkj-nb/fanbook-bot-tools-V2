@@ -11,7 +11,6 @@ import {
   Button,
   FormItem,
   Input,
-  Message,
   Option,
   Select,
 } from '@arco-design/web-vue';
@@ -107,8 +106,8 @@ function onInput(v: string) {
 }
 
 /** 从候选中选中某个用户。 */
-function onPick(id: string | number | boolean) {
-  const key = String(id);
+function onPick(value: unknown) {
+  const key = String(value);
   const user = results.value.find(u => u.id === key);
   if (user) setUser(BigInt(user.id), user);
 }
@@ -125,7 +124,6 @@ async function resolveInput() {
   if (/^\d{15,}$/.test(query)) {
     try {
       setUser(BigInt(query));
-      Message.success({ content: '已识别用户 ID', duration: 2000 });
     } catch {
       status.value = 'error';
       hint.value = '用户 ID 格式不正确';
@@ -147,7 +145,6 @@ async function resolveInput() {
           id: Number(query),
         });
         setUser(user);
-        Message.success({ content: '已识别用户 ID', duration: 2000 });
         searching.value = false;
         return;
       } catch { // 解析失败则继续按用户名搜索
@@ -158,16 +155,16 @@ async function resolveInput() {
     const list = await searchGuildMembers(props.guild, query);
     results.value = list;
     if (list.length === 0) {
+      // 无匹配：仅用行内提示，不再弹出 toast
       status.value = 'error';
       hint.value = '未找到该用户，请检查用户名或改用用户 ID';
-      Message.info({ content: '未找到匹配的用户', duration: 3000 });
     } else if (list.length === 1) {
-      const only = list[0];
-      setUser(BigInt(only.id), only);
-      Message.success({ content: `已选择：${only.name}`, duration: 2500 });
+      setUser(BigInt(list[0].id), list[0]);
     }
   } catch {
-    Message.error({ content: '搜索失败，请稍后重试', duration: 3000 });
+    // 搜索异常：仅用行内提示，不再弹出 toast
+    status.value = 'error';
+    hint.value = '搜索失败，请稍后重试';
   }
   searching.value = false;
 }
@@ -186,12 +183,20 @@ async function resolveInput() {
     <div class='user-search'>
       <Input
         :model-value='text'
-        placeholder='用户名 / 昵称，或直接填写用户 ID'
+        placeholder='搜索用户名 / 昵称，或输入用户 ID'
         allow-clear
         @input='onInput'
         @press-enter='resolveInput'
         @clear='() => onInput("")'
-      />
+      >
+        <template #prefix>
+          <span class='user-search-icon' aria-hidden='true'>
+            <svg viewBox='0 0 1024 1024' width='15' height='15'>
+              <path fill='currentColor' d='M448 64a384 384 0 0 1 307.2 614.4l219.9 219.9a42.7 42.7 0 0 1-60.4 60.4l-219.9-219.9A384 384 0 1 1 448 64zm0 85.3a298.7 298.7 0 1 0 0 597.4 298.7 298.7 0 0 0 0-597.4z' />
+            </svg>
+          </span>
+        </template>
+      </Input>
       <Button
         type='primary'
         :loading='searching'
@@ -205,7 +210,7 @@ async function resolveInput() {
     <Select
       v-if='results.length > 1'
       class='user-search-select'
-      placeholder='选择用户（自动填入用户 ID）'
+      placeholder='从匹配结果中选择用户'
       allow-search
       @change='onPick'
     >
@@ -250,39 +255,76 @@ async function resolveInput() {
 <style scoped>
 .user-search {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 .user-search :deep(.arco-input-wrapper) {
   flex: 1 1 auto;
   min-width: 0;
+  height: 38px;
+  padding: 0 8px 0 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-2);
+  background: #fff;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.user-search :deep(.arco-input-wrapper:hover) {
+  border-color: #bcbcbc;
+}
+.user-search :deep(.arco-input-wrapper:focus-within) {
+  border-color: var(--winui-accent) !important;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, .15) !important;
+}
+.user-search :deep(.arco-input) {
+  font-size: 14px;
+}
+.user-search-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  color: var(--color-text-3);
 }
 .user-search :deep(.arco-btn) {
   flex: none;
+  height: 38px;
+  padding: 0 18px;
 }
 .user-search-select {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+}
+.user-search-select :deep(.arco-select-view) {
+  height: 38px;
+  padding-left: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-2);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.user-search-select :deep(.arco-select-view.arco-select-view-focus) {
+  border-color: var(--winui-accent) !important;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, .15) !important;
 }
 .user-picked {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
-  padding: 6px 10px;
-  border: 1px solid var(--color-border-1);
-  border-radius: 4px;
-  background: var(--color-fill-1);
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 120, 212, .25);
+  border-radius: 6px;
+  background: rgba(0, 120, 212, .06);
 }
 .user-picked-avatar {
   flex: none;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   object-fit: cover;
   background: var(--color-fill-2);
 }
 .user-picked-name {
   font-size: 13px;
+  font-weight: 600;
   color: var(--color-text-1);
 }
 .user-picked-id {
@@ -296,8 +338,9 @@ async function resolveInput() {
   cursor: pointer;
 }
 .user-hint {
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: 12px;
+  line-height: 1.4;
   color: rgb(var(--danger-6));
 }
 </style>
