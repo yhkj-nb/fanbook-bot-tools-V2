@@ -64,12 +64,12 @@ const features: Array<{
 </script>
 
 <template>
-  <div class='w-11/12 mx-auto my-0'>
+  <div class='home w-11/12 mx-auto my-0'>
     <Row v-for='row in features'>
       <Card class='w-full mb-5' :title='row.title'>
         <Card
           v-for='item in row.children'
-          class='card inline-flex w-24 h-24 mr-4 cursor-pointer'
+          class='home-card card inline-flex w-24 h-24 mr-4 cursor-pointer'
           @click='() => $router.push(item.link)'
         >
           <component :is='item.icon' />
