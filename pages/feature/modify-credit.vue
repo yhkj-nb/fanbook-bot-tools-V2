@@ -294,68 +294,76 @@ async function onSubmit() {
         >
           <Input v-model='input.credit.title.icon' />
         </FormItem>
-        <TypographyTitle :heading='4'>勋章预览</TypographyTitle>
-        <div class='credit-preview'>
-          <div class='preview-card'>
-            <div class='preview-header'>
-              <img
-                v-if='input.credit.authority.icon'
-                class='preview-header-icon'
-                :src='input.credit.authority.icon'
-                alt='标题栏图片'
-              >
-              <div
-                v-else
-                class='preview-header-icon'
-              />
-              <div class='preview-header-name'>
-                {{ input.credit.authority.name || '这是标题栏' }}
-              </div>
-            </div>
-            <div class='preview-body'>
-              <div
-                v-for='(slot, i) in (input.credit.slots?.[0] ?? [])'
-                :key='i'
-                class='preview-slot'
-              >
-                <img
-                  v-if='slot.image'
-                  class='preview-slot-img'
-                  :src='slot.image'
-                  :alt='slot.value'
-                >
-                <div class='preview-slot-value'>
-                  {{ slot.value || '这是插槽' }}
-                </div>
-              </div>
-              <div
-                v-if='!(input.credit.slots?.[0]?.length)'
-                class='preview-slot-value'
-              >
-                这是插槽
-              </div>
-            </div>
-            <div class='preview-watermark'>@云痕科技</div>
-          </div>
-          <div class='preview-nickname'>
-            <img
-              v-if='input.credit.title.icon'
-              class='preview-nick-icon'
-              :src='input.credit.title.icon'
-              alt='勋章图标'
-            >
-            <span class='preview-nick-text'>用户昵称（勋章显示在昵称左侧）</span>
-          </div>
-        </div>
-        <FormItem class='operations'>
-          <Button
-            type='primary'
-            html-type='submit'
-          >
-            修改勋章
-          </Button>
-        </FormItem>
       </template>
+
+      <!-- 勋章预览：常驻显示（与「设置荣誉」页一致），选中徽章后实时同步修改效果 -->
+      <TypographyTitle :heading='4'>勋章预览</TypographyTitle>
+      <div class='credit-preview'>
+        <div
+          v-if='!selectedId'
+          class='preview-tip'
+        >
+          选择上方「该用户的全部徽章」中的任意一个，这里会实时预览修改效果
+        </div>
+        <div class='preview-card'>
+          <div class='preview-header'>
+            <img
+              v-if='input.credit.authority.icon'
+              class='preview-header-icon'
+              :src='input.credit.authority.icon'
+              alt='标题栏图片'
+            >
+            <div
+              v-else
+              class='preview-header-icon'
+            />
+            <div class='preview-header-name'>
+              {{ input.credit.authority.name || '这是标题栏' }}
+            </div>
+          </div>
+          <div class='preview-body'>
+            <div
+              v-for='(slot, i) in (input.credit.slots?.[0] ?? [])'
+              :key='i'
+              class='preview-slot'
+            >
+              <img
+                v-if='slot.image'
+                class='preview-slot-img'
+                :src='slot.image'
+                :alt='slot.value'
+              >
+              <div class='preview-slot-value'>
+                {{ slot.value || '这是插槽' }}
+              </div>
+            </div>
+            <div
+              v-if='!(input.credit.slots?.[0]?.length)'
+              class='preview-slot-value'
+            >
+              这是插槽
+            </div>
+          </div>
+          <div class='preview-watermark'>@云痕科技</div>
+        </div>
+        <div class='preview-nickname'>
+          <img
+            v-if='input.credit.title.icon'
+            class='preview-nick-icon'
+            :src='input.credit.title.icon'
+            alt='勋章图标'
+          >
+          <span class='preview-nick-text'>用户昵称（勋章显示在昵称左侧）</span>
+        </div>
+      </div>
+      <FormItem v-if='selectedId' class='operations'>
+        <Button
+          type='primary'
+          html-type='submit'
+        >
+          修改勋章
+        </Button>
+      </FormItem>
     </Form>
   </Spin>
 </template>
@@ -438,6 +446,17 @@ h4 {
 }
 .credit-preview {
   margin-bottom: 16px;
+}
+/* 未选中徽章时预览区上方的引导文案 */
+.preview-tip {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border: 1px dashed var(--color-border-2);
+  border-radius: 8px;
+  color: var(--color-text-3);
+  font-size: 12px;
+  line-height: 1.6;
+  background: var(--color-fill-1);
 }
 .preview-card {
   padding: 16px;
