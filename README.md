@@ -6,10 +6,13 @@
 
 <p>基于 <strong>Nuxt 3 + Vue 3 + Arco Design Vue</strong> 构建，机器人令牌仅保存在本地浏览器（localStorage），操作直接调用 Fanbook OpenAPI。</p>
 
+<p>本项目是 <a href="https://github.com/Starlight-Dev-Team/fanbook-bot-tools">Starlight-Dev-Team/fanbook-bot-tools</a> 的 fork（原仓库 / 上游项目）。</p>
+
 <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyhkj-nb%2Ffanbook-bot-tools-V2"><img src="https://vercel.com/button" alt="Deploy with Vercel" /></a>
 <a href="https://github.com/yhkj-nb/fanbook-bot-tools-V2/blob/main/LICENSE"><img src="https://img.shields.io/github/license/yhkj-nb/fanbook-bot-tools-V2" alt="License" /></a>
 <a href="https://github.com/yhkj-nb/fanbook-bot-tools-V2"><img src="https://img.shields.io/badge/node-20.x-339933" alt="Node" /></a>
 <a href="https://github.com/yhkj-nb/fanbook-bot-tools-V2"><img src="https://img.shields.io/badge/packageManager-pnpm-ff0000" alt="pnpm" /></a>
+<a href="https://github.com/Starlight-Dev-Team/fanbook-bot-tools"><img src="https://img.shields.io/badge/原仓库-Starlight--Dev--Team%2Ffanbook--bot--tools-1f6feb?logo=github&logoColor=white" alt="原仓库 Starlight-Dev-Team" /></a>
 
 </div>
 
@@ -48,13 +51,17 @@
 
 <div align="center">
 
-| 腾讯云 EdgeOne · 国际站 | 腾讯云 EdgeOne · 中国站 | Cloudflare Workers |
+| 腾讯云 EdgeOne · 国际站 | 腾讯云 EdgeOne · 中国站 | Cloudflare Pages |
 | :---: | :---: | :---: |
-| [![使用 EdgeOne 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?project-name=fanbook-bot-tools-V2&repository-url=https://github.com/yhkj-nb/fanbook-bot-tools-V2&install-command=pnpm%20install&build-command=pnpm%20run%20build&output-directory=.output%2Fpublic) | [![使用 EdgeOne 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://console.cloud.tencent.com/edgeone/makers/new?project-name=fanbook-bot-tools-V2&repository-url=https://github.com/yhkj-nb/fanbook-bot-tools-V2&install-command=pnpm%20install&build-command=pnpm%20run%20build&output-directory=.output%2Fpublic) | [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/yhkj-nb/fanbook-bot-tools-V2) |
+| [![使用 EdgeOne 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?project-name=fanbook-bot-tools-V2&repository-url=https://github.com/yhkj-nb/fanbook-bot-tools-V2&install-command=pnpm%20install&build-command=pnpm%20run%20build&output-directory=.output%2Fpublic) | [![使用 EdgeOne 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://console.cloud.tencent.com/edgeone/makers/new?project-name=fanbook-bot-tools-V2&repository-url=https://github.com/yhkj-nb/fanbook-bot-tools-V2&install-command=pnpm%20install&build-command=pnpm%20run%20build&output-directory=.output%2Fpublic) | [![Deploy to Cloudflare Pages](https://img.shields.io/badge/Cloudflare%20Pages-F38020?logo=cloudflare&logoColor=white)](https://dash.cloudflare.com/?to=/:account/pages/new) |
 
-| Vercel | Netlify |
-| :---: | :---: |
-| [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyhkj-nb%2Ffanbook-bot-tools-V2) | [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/yhkj-nb/fanbook-bot-tools-V2) |
+| Cloudflare Workers | Vercel | Netlify |
+| :---: | :---: | :---: |
+| [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/yhkj-nb/fanbook-bot-tools-V2) | [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyhkj-nb%2Ffanbook-bot-tools-V2) | [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/yhkj-nb/fanbook-bot-tools-V2) |
+
+| 阿里云 ESA |
+| :---: |
+| [![Deploy to 阿里云 ESA](https://img.shields.io/badge/%E9%98%BF%E9%87%8C%E4%BA%91%20ESA-FF6A00?logo=alibabacloud&logoColor=white)](https://esa.console.aliyun.com/) |
 
 </div>
 
