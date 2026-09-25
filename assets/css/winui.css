@@ -160,7 +160,7 @@ article {
   /* ---------- 目标用户搜索行 ---------- */
   .user-search {
     gap: 8px !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 0 !important;
   }
   .user-search .arco-input-wrapper {
     height: 42px !important;
