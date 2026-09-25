@@ -197,7 +197,7 @@ async function onSubmit() {
             v-if='c.title.icon'
             class='credit-img'
             :src='c.title.icon'
-            :preview='false'
+            :preview='true'
             width='72'
             height='72'
           />
@@ -217,7 +217,7 @@ async function onSubmit() {
             v-if='c.authority?.icon'
             class='credit-authority'
             :src='c.authority.icon'
-            :preview='false'
+            :preview='true'
             width='20'
             height='20'
           />
@@ -296,21 +296,17 @@ async function onSubmit() {
           选择上方「该用户的全部徽章」中的任意一个，这里会实时预览修改效果
         </div>
         <div class='preview-card'>
-          <div class='preview-header'>
-            <img
-              v-if='input.credit.authority.icon'
-              class='preview-header-icon'
-              :src='input.credit.authority.icon'
-              alt='标题栏图片'
-            >
-            <div
-              v-else
-              class='preview-header-icon'
-            />
-            <div class='preview-header-name'>
-              {{ input.credit.authority.name || '这是标题栏' }}
-            </div>
+        <div class='preview-header'>
+          <img
+            v-show='input.credit.authority.icon'
+            class='preview-header-icon'
+            :src='input.credit.authority.icon'
+            alt='标题栏图片'
+          >
+          <div class='preview-header-name'>
+            {{ input.credit.authority.name || '这是标题栏' }}
           </div>
+        </div>
           <div class='preview-body'>
             <div
               v-for='(slot, i) in (input.credit.slots?.[0] ?? [])'
@@ -338,7 +334,7 @@ async function onSubmit() {
         </div>
         <div class='preview-nickname'>
           <img
-            v-if='input.credit.title.icon'
+            v-show='input.credit.title.icon'
             class='preview-nick-icon'
             :src='input.credit.title.icon'
             alt='勋章图标'
