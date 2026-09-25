@@ -26,7 +26,7 @@
 | 🔐 **本地令牌** | Bot Token 仅存于浏览器 localStorage，不上传任何服务器 |
 | 📱 **响应式界面** | 桌面与移动端自适应，勋章预览区实时反映编辑结果 |
 
-> 所有功能均为**纯静态 SPA**（服务端渲染已关闭），可直接托管在 Vercel、Cloudflare Pages 等任意静态平台。
+> 所有功能均为**纯静态 SPA**（服务端渲染已关闭），可直接托管在 Vercel、Cloudflare Pages、Netlify、腾讯云 EdgeOne、阿里云 ESA、Cloudflare Workers 等任意静态 / 边缘平台，也可用 Docker + Node 自托管。
 
 ---
 
@@ -44,15 +44,22 @@
 
 ## 🚀 一键部署
 
-点击下方按钮，直接将本仓库克隆并部署到 Vercel（构建命令、输出目录等已在仓库的 [`vercel.json`](./vercel.json) 中配置好）：
+点击下方任意按钮，直接把本仓库克隆并部署到对应平台。构建命令、输出目录、Node 版本、SPA 回退等已在本仓库的 [`vercel.json`](./vercel.json)、[`netlify.toml`](./netlify.toml)、[`edgeone.json`](./edgeone.json)、[`esa.jsonc`](./esa.jsonc) 与 [`Dockerfile`](./Dockerfile) 中配置好，无需手动填写。
 
 <div align="center">
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyhkj-nb%2Ffanbook-bot-tools-V2)
+| 腾讯云 EdgeOne · 国际站 | 腾讯云 EdgeOne · 中国站 | Cloudflare Workers |
+| :---: | :---: | :---: |
+| [![使用 EdgeOne 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?project-name=fanbook-bot-tools-V2&repository-url=https://github.com/yhkj-nb/fanbook-bot-tools-V2&install-command=pnpm%20install&build-command=pnpm%20run%20build&output-directory=.output%2Fpublic) | [![使用 EdgeOne 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://console.cloud.tencent.com/edgeone/makers/new?project-name=fanbook-bot-tools-V2&repository-url=https://github.com/yhkj-nb/fanbook-bot-tools-V2&install-command=pnpm%20install&build-command=pnpm%20run%20build&output-directory=.output%2Fpublic) | [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/yhkj-nb/fanbook-bot-tools-V2) |
+
+| Vercel | Netlify |
+| :---: | :---: |
+| [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyhkj-nb%2Ffanbook-bot-tools-V2) | [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/yhkj-nb/fanbook-bot-tools-V2) |
 
 </div>
 
-部署完成后，在浏览器打开站点，填入你的 Fanbook Bot Token 即可开始使用。
+> 本项目是纯前端 SPA，**无需任何后端或环境变量**。部署完成后，在浏览器打开站点，填入你的 Fanbook Bot Token 即可使用。
+> 若某平台提示「无法获取存储库内容」，先 [Fork](https://github.com/yhkj-nb/fanbook-bot-tools-V2/fork) 本仓库，再用「连接到 Git 仓库」的方式部署即可。
 
 ---
 
@@ -128,6 +135,103 @@ npx wrangler pages deploy .output/public
 ### SPA 路由回退
 
 仓库已在 `public/_routes.json` 中声明了路由规则：静态资源（`/_nuxt/*`、图片、JS/CSS 等）走 CDN 缓存，其余路径回退到 SPA 入口，保证 `/feature/*`、`/login` 等客户端路由不会 404。
+
+---
+
+## ⚡ 部署到 Cloudflare Workers
+
+> 本项目是纯静态 SPA，**推荐优先用上面的 [Cloudflare Pages](#☁️-部署到-cloudflare-pages)** 托管（配置最简单、自动 SPA 回退）。Workers 入口适用于「想在 Worker 运行时里托管静态资源」的场景。
+
+如果你希望以 Cloudflare Workers 形式托管（例如想用 `*.workers.dev` 域名或在 Worker 里加自定义逻辑），把构建产物 `.output/public` 作为静态资源即可：
+
+1. 在 Cloudflare 控制台 **Workers & Pages → 创建 → Pages → 直接上传**，上传 `.output/public` 目录；或在 Worker 项目中用 **Workers Assets** 绑定该目录（`assets.directory = .output/public`），并开启 SPA 回退（未匹配路径返回 `index.html`）。
+2. 点击上方 **Deploy to Cloudflare Workers** 按钮可快速拉起部署向导。
+
+```bash
+# 本地构建后直接上传静态产物到 Cloudflare Pages（最省事）
+pnpm install
+pnpm run build
+npx wrangler pages deploy .output/public
+```
+
+---
+
+## 🌏 部署到腾讯云 EdgeOne（Makers）
+
+腾讯云 EdgeOne 国际站与中国站均支持，构建配置已写在 [`edgeone.json`](./edgeone.json)（构建命令、输出目录、Node 版本、SPA 回退都已配好）。
+
+- 国际站：<https://edgeone.ai/pages/new>
+- 中国站：<https://console.cloud.tencent.com/edgeone/makers/new>
+
+### 方式一：一键部署按钮
+
+点击上方 🚀 一键部署 中的 **EdgeOne** 按钮，平台会自动读取 `edgeone.json` 完成构建与发布。
+
+### 方式二：控制台导入 Git 仓库
+
+1. 在 EdgeOne 控制台 **Pages → 创建项目 → 连接到 Git**，选择本仓库。
+2. 构建设置会自动读取 `edgeone.json`：
+
+   | 配置项 | 值 |
+   | :--- | :--- |
+   | 安装命令 | `pnpm install` |
+   | 构建命令 | `pnpm run build` |
+   | 输出目录 | `.output/public` |
+   | Node 版本 | `20.18.0` |
+
+3. 点击 **部署**。客户端路由由 `edgeone.json` 里的 `rewrites`（`/* → /index.html`）做 SPA 回退，不会 404。
+
+> EdgeOne 预装 Node 版本建议用列表内的 `20.18.0`（或 `22.11.0`），`edgeone.json` 已固定为 `20.18.0`，填其他版本可能构建失败。
+
+---
+
+## 🟢 部署到 Netlify
+
+项目根目录的 [`netlify.toml`](./netlify.toml) 已写好构建命令、发布目录与 SPA 回退（`/* → /index.html`）。
+
+- **一键部署**：点击上方 **Deploy to Netlify** 按钮。
+- **控制台**：在 Netlify **Add new project → Import an existing project** 导入本仓库，构建设置会自动读取 `netlify.toml`。
+- **命令行**：
+
+```bash
+npx netlify login
+pnpm install && pnpm run build
+npx netlify deploy --prod --dir .output/public
+```
+
+Netlify 没有平台级存储，但本项目是纯前端 SPA，所有状态都在浏览器 localStorage，因此无需任何外部数据库或环境变量。
+
+---
+
+## ☁️ 部署到阿里云 ESA（Pages）
+
+阿里云 ESA 边缘计算的「函数和 Pages」支持静态托管。构建配置写在 [`esa.jsonc`](./esa.jsonc)：输出目录 `.output/public`，并启用 SPA 回退（`notFoundStrategy: singlePageApplication`）。
+
+1. 在 ESA 控制台 **边缘计算 → 函数和 Pages** 创建项目，导入 GitHub 仓库。
+2. 构建命令填 `pnpm run build`，静态资源目录填 `.output/public`（或让平台直接读取 `esa.jsonc`）。
+3. 点击 **部署**。`esa.jsonc` 的 `notFoundStrategy` 保证 `/feature/*`、`/login` 等前端路由不会 404。
+
+> 本项目为纯静态 SPA，无需 ESA 的函数入口（`entry`）；只用 `assets` 静态资源配置即可。
+
+---
+
+## 🐳 部署到 Node / Docker（自托管）
+
+适合私有化部署或放到自己的服务器 / 容器里。仓库根目录的 [`Dockerfile`](./Dockerfile) 已做好多阶段构建：先 `pnpm run build`，再用 `serve` 以静态服务器托管 `.output/public`（自带 SPA 回退）。
+
+```bash
+# 方式一：直接用 Docker 构建并运行
+docker build -t fanbook-bot-tools .
+docker run -d -p 3000:3000 --name fanbook-bot-tools fanbook-bot-tools
+# 浏览器访问 http://localhost:3000
+
+# 方式二：本地用 Node 直接托管静态产物
+pnpm install
+pnpm run build
+npx serve -s .output/public -l 3000
+```
+
+> 本项目纯前端，无需任何服务端环境变量；Bot Token 仍在浏览器 localStorage 中保存。
 
 ---
 
