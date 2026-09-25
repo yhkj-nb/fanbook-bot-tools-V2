@@ -1,5 +1,3 @@
-import { execSync } from 'node:child_process';
-
 export type AnnouncementType =
   | 'info'
   | 'danger';
@@ -14,7 +12,7 @@ interface AppConfig {
   announcements: Announcement[];
   /** 当前部署版本（构建时注入的 commit 短哈希）。 */
   buildCommit: string;
-  /** 当前部署版本的提交时间（ISO 字符串）。 */
+  /** 当前部署版本的构建时间（ISO 字符串）。 */
   buildTime: string;
   /** Vercel 部署页地址（用于「查看部署」），为空则不显示。 */
   vercelProjectUrl: string;
@@ -26,27 +24,22 @@ declare module 'nuxt/schema' {
 
 /**
  * 解析构建时注入的 commit 短哈希。
- * 优先使用 CI 注入的环境变量（Vercel 的 VERCEL_GIT_COMMIT_SHA / GitHub Actions 的 GITHUB_SHA），
- * 回退到本地 git 命令。仅用于构建时计算，不会进入客户端运行时。
+ * 直接使用 CI 注入的环境变量（Vercel 的 VERCEL_GIT_COMMIT_SHA / GitHub Actions 的 GITHUB_SHA）。
+ *
+ * 注意：app.config.ts 会被打包进客户端产物，因此【禁止】引入 node:child_process 等
+ * Node 内置模块（否则 Vite 在浏览器构建时会报
+ * "execSync is not exported by __vite-browser-external"）。
+ * app.config.ts 在构建期（服务端）求值，下面的函数只返回字符串，不会进入客户端运行时。
+ * 本地开发无上述环境变量时回退为 'local'。
  */
 function resolveBuildCommit(): string {
   const sha = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA;
-  if (sha) return sha.slice(0, 7);
-  try {
-    return execSync('git rev-parse --short HEAD').toString().trim();
-  } catch {
-    return 'unknown';
-  }
+  return sha ? sha.slice(0, 7) : 'local';
 }
 
-/** 解析构建时注入的提交时间（ISO 字符串）。 */
+/** 解析构建时间（ISO 字符串）。 */
 function resolveBuildTime(): string {
-  try {
-    const out = execSync('git show -s --format=%cI HEAD').toString().trim();
-    return out ? new Date(out).toISOString() : new Date().toISOString();
-  } catch {
-    return new Date().toISOString();
-  }
+  return new Date().toISOString();
 }
 
 const config: AppConfig = {
