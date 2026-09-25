@@ -180,33 +180,34 @@ async function resolveInput() {
     :validate-status='status'
     :validate-trigger='[]'
   >
-    <div class='user-search'>
-      <Input
-        :model-value='text'
-        placeholder='搜索用户名 / 昵称，或输入用户 ID'
-        allow-clear
-        @input='onInput'
-        @press-enter='resolveInput'
-        @clear='() => onInput("")'
-      >
-        <template #prefix>
-          <span class='user-search-icon' aria-hidden='true'>
-            <svg viewBox='0 0 1024 1024' width='15' height='15'>
-              <path fill='currentColor' d='M448 64a384 384 0 0 1 307.2 614.4l219.9 219.9a42.7 42.7 0 0 1-60.4 60.4l-219.9-219.9A384 384 0 1 1 448 64zm0 85.3a298.7 298.7 0 1 0 0 597.4 298.7 298.7 0 0 0 0-597.4z' />
-            </svg>
-          </span>
-        </template>
-      </Input>
-      <Button
-        type='primary'
-        :loading='searching'
-        @click='resolveInput'
-      >
-        搜索
-      </Button>
-    </div>
+    <div class='user-field'>
+      <div class='user-search'>
+        <Input
+          :model-value='text'
+          placeholder='搜索用户名 / 昵称，或输入用户 ID'
+          allow-clear
+          @input='onInput'
+          @press-enter='resolveInput'
+          @clear='() => onInput("")'
+        >
+          <template #prefix>
+            <span class='user-search-icon' aria-hidden='true'>
+              <svg viewBox='0 0 1024 1024' width='15' height='15'>
+                <path fill='currentColor' d='M448 64a384 384 0 0 1 307.2 614.4l219.9 219.9a42.7 42.7 0 0 1-60.4 60.4l-219.9-219.9A384 384 0 1 1 448 64zm0 85.3a298.7 298.7 0 1 0 0 597.4 298.7 298.7 0 0 0 0-597.4z' />
+              </svg>
+            </span>
+          </template>
+        </Input>
+        <Button
+          type='primary'
+          :loading='searching'
+          @click='resolveInput'
+        >
+          搜索
+        </Button>
+      </div>
 
-    <!-- 搜索结果（多个候选时） -->
+      <!-- 搜索结果（多个候选时）：独占一行，显示在搜索框下方 -->
       <Select
         v-if='results.length > 1'
         class='user-search-select'
@@ -215,52 +216,61 @@ async function resolveInput() {
         :trigger-props='{ contentClass: "user-search-dropdown" }'
         @change='onPick'
       >
-      <Option
-        v-for='u in results'
-        :key='u.id'
-        :value='u.id'
-      >
-        <span class='user-search-result'>
-          <img
-            v-if='u.avatar'
-            class='user-search-avatar'
-            :src='u.avatar'
-            :alt='u.name'
-          >
-          <span class='user-search-meta'>
-            <span>{{ u.name }}</span>
-            <span class='user-search-id'>{{ u.id }}</span>
+        <Option
+          v-for='u in results'
+          :key='u.id'
+          :value='u.id'
+        >
+          <span class='user-search-result'>
+            <img
+              v-if='u.avatar'
+              class='user-search-avatar'
+              :src='u.avatar'
+              :alt='u.name'
+            >
+            <span class='user-search-meta'>
+              <span>{{ u.name }}</span>
+              <span class='user-search-id'>{{ u.id }}</span>
+            </span>
           </span>
-        </span>
-      </Option>
-    </Select>
+        </Option>
+      </Select>
 
-    <!-- 已确认的用户 -->
-    <div v-if='picked' class='user-picked'>
-      <img
-        v-if='picked.avatar'
-        class='user-picked-avatar'
-        :src='picked.avatar'
-        :alt='picked.name'
-      >
-      <div class='user-picked-meta'>
-        <span class='user-picked-name'>{{ picked.name || '已选择用户' }}</span>
-        <span class='user-picked-id'>#{{ picked.id }}</span>
+      <!-- 已确认的用户 -->
+      <div v-if='picked' class='user-picked'>
+        <img
+          v-if='picked.avatar'
+          class='user-picked-avatar'
+          :src='picked.avatar'
+          :alt='picked.name'
+        >
+        <div class='user-picked-meta'>
+          <span class='user-picked-name'>{{ picked.name || '已选择用户' }}</span>
+          <span class='user-picked-id'>#{{ picked.id }}</span>
+        </div>
+        <a class='user-picked-clear' @click='onInput("")'>清除</a>
       </div>
-      <a class='user-picked-clear' @click='onInput("")'>清除</a>
-    </div>
-    <div v-else-if='hint' class='user-hint'>
-      {{ hint }}
+      <div v-else-if='hint' class='user-hint'>
+        {{ hint }}
+      </div>
     </div>
   </FormItem>
 </template>
 
 <style scoped>
+/* 纵向排列：搜索行 → 匹配结果下拉 → 已选用户，逐行堆叠不并排 */
+.user-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
 .user-search {
   display: flex;
   align-items: stretch;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 .user-search :deep(.arco-input-wrapper) {
   flex: 1 1 auto;
@@ -294,7 +304,9 @@ async function resolveInput() {
   padding: 0 18px;
 }
 .user-search-select {
-  margin-bottom: 10px;
+  display: block;
+  width: 100%;
+  margin-bottom: 0;
 }
 .user-search-select :deep(.arco-select-view) {
   height: 38px;
@@ -312,7 +324,7 @@ async function resolveInput() {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 0;
   padding: 8px 12px;
   border: 1px solid rgba(0, 120, 212, .25);
   border-radius: 6px;
