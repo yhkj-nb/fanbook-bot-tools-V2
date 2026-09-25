@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { IconRefresh } from '@arco-design/web-vue/es/icon';
-
 import { Bot } from '@starlight-dev-team/fanbook-api-sdk';
 import type {
   GuildCredit,
@@ -136,18 +134,6 @@ async function onSubmit() {
         field='user'
         required
       />
-
-      <FormItem class='operations'>
-        <Button
-          :loading='status === "fetching"'
-          @click='fetchCredits'
-        >
-          <template #icon>
-            <IconRefresh />
-          </template>
-          获取用户徽章
-        </Button>
-      </FormItem>
 
       <FormItem
         label='自定义 ID'
