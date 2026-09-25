@@ -181,18 +181,6 @@ async function onSubmit() {
         required
       />
 
-      <FormItem class='operations'>
-        <Button
-          :loading='status === "fetching"'
-          @click='fetchCredits'
-        >
-          <template #icon>
-            <IconRefresh />
-          </template>
-          获取用户徽章
-        </Button>
-      </FormItem>
-
       <TypographyTitle :heading='4'>该用户的全部徽章</TypographyTitle>
       <div
         v-if='credits.length'
@@ -235,7 +223,7 @@ async function onSubmit() {
       </div>
       <Empty
         v-else
-        description='暂无徽章，请先填写上方服务器与用户并点击「获取用户徽章」'
+        description='暂无徽章。填写上方服务器与用户后会自动获取'
       />
 
       <template v-if='selectedId'>
