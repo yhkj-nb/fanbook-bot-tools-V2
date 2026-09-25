@@ -1,0 +1,14 @@
+# Netlify 构建与 SPA 回退配置
+# 构建命令、发布目录已写好；未匹配到静态资源的路径统一回退到 SPA 入口 index.html
+[build]
+  command = "pnpm install && pnpm run build"
+  publish = ".output/public"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# 单页应用（SPA）回退：所有未知路径返回 index.html，由前端路由接管
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
