@@ -197,6 +197,7 @@ async function onSubmit() {
             v-if='c.title.icon'
             class='credit-img'
             :src='c.title.icon'
+            :preview='false'
             width='72'
             height='72'
           />
@@ -216,6 +217,7 @@ async function onSubmit() {
             v-if='c.authority?.icon'
             class='credit-authority'
             :src='c.authority.icon'
+            :preview='false'
             width='20'
             height='20'
           />
