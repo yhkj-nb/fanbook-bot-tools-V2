@@ -23,20 +23,20 @@ import {
   type VersionInfo,
 } from '~~/utils/app';
 
-/** 构建时注入的部署元信息（沙箱无 .nuxt 类型声明时做形状断言）。 */
-const appConfig = useAppConfig() as {
-  buildCommit: string;
-  buildTime: string;
-  vercelProjectUrl: string;
+/** 构建时注入的部署元信息（通过 public runtimeConfig 暴露给客户端）。 */
+const deploy = useRuntimeConfig().public as {
+  buildCommit?: string;
+  buildTime?: string;
+  vercelProjectUrl?: string;
 };
 /** 当前部署版本（构建时注入）。 */
-const currentCommit = appConfig.buildCommit || 'unknown';
+const currentCommit = deploy.buildCommit || 'unknown';
 /** 当前部署版本提交时间。 */
-const buildTime = appConfig.buildTime
-  ? new Date(appConfig.buildTime).toLocaleString('zh-CN')
+const buildTime = deploy.buildTime
+  ? new Date(deploy.buildTime).toLocaleString('zh-CN')
   : '未知';
 /** Vercel 部署页地址（为空则不显示「查看部署」）。 */
-const vercelProjectUrl = appConfig.vercelProjectUrl || '';
+const vercelProjectUrl = deploy.vercelProjectUrl || '';
 
 /** GitHub 最新提交信息。 */
 const latest = ref(undefined as VersionInfo | undefined);
