@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/_nuxt/*",
+    "/favicon.ico",
+    "/logo.png",
+    "/200.html",
+    "/404.html",
+    "/*.js",
+    "/*.mjs",
+    "/*.cjs",
+    "/*.css",
+    "/*.png",
+    "/*.jpg",
+    "/*.jpeg",
+    "/*.gif",
+    "/*.svg",
+    "/*.ico",
+    "/*.webp",
+    "/*.avif",
+    "/*.woff",
+    "/*.woff2",
+    "/*.ttf",
+    "/*.json",
+    "/*.webmanifest",
+    "/*.map"
+  ]
+}
