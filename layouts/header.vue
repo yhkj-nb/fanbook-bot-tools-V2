@@ -116,4 +116,8 @@ body.mobile .bot-avatar:deep() .bot-avatar-loading {
 .announcement {
   margin-bottom: 12px;
 }
+body.mobile :deep() .arco-page-header-title {
+  font-size: 15px;
+  font-weight: 600;
+}
 </style>
