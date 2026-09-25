@@ -9,8 +9,8 @@ import '@arco-design/web-vue/dist/arco.css';
 import { checkAuth } from './middleware/guard.global';
 checkAuth(useRoute());
 
-/** 浏览器标签页标题带上当前部署版本号，方便通过标签区分部署版本。 */
-const titleText = `Fanbook 机器人工具 · ${useAppConfig().buildCommit || ''}`;
+/** 浏览器标签页标题（版本号只在控制台输出，不再显示在页面/标题上）。 */
+const titleText = 'Fanbook 机器人工具';
 </script>
 
 <template>
