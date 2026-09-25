@@ -89,7 +89,7 @@ export interface UpdateStatus {
  * 若两者 commit 不一致，说明 GitHub 已有新提交但尚未部署。
  */
 export async function checkUpdate(): Promise<UpdateStatus> {
-  const current = useAppConfig().buildCommit || '';
+  const current = useRuntimeConfig().public.buildCommit || '';
   try {
     const info = await getLatestVersion();
     return {
