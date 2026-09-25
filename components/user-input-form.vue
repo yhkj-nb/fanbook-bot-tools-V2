@@ -207,13 +207,14 @@ async function resolveInput() {
     </div>
 
     <!-- 搜索结果（多个候选时） -->
-    <Select
-      v-if='results.length > 1'
-      class='user-search-select'
-      placeholder='从匹配结果中选择用户'
-      allow-search
-      @change='onPick'
-    >
+      <Select
+        v-if='results.length > 1'
+        class='user-search-select'
+        placeholder='从匹配结果中选择用户'
+        allow-search
+        :trigger-props='{ contentClass: "user-search-dropdown" }'
+        @change='onPick'
+      >
       <Option
         v-for='u in results'
         :key='u.id'
