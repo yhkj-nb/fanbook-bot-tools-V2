@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { TypographyText } from '@arco-design/web-vue';
-
 export interface FooterItem {
   label: string;
   link: string;
@@ -17,15 +15,6 @@ const communityLinks: FooterItem[] = [{
 const repositoryLinks: FooterItem[] = [{
   label: '原仓库',
   link: 'https://github.com/Starlight-Dev-Team/fanbook-bot-tools',
-}, {
-  label: '由云痕科技修改',
-  link: 'https://github.com/yhkj-nb/fanbook-bot-tools-V2',
-}, {
-  label: '关于',
-  link: '/about',
-}, {
-  label: '版本信息',
-  link: '/version',
 }];
 </script>
 
@@ -64,19 +53,6 @@ const repositoryLinks: FooterItem[] = [{
         </AppLink>
       </template>
     </div>
-    <TypographyText class='footer-copy'>
-      Released under
-      <AppLink
-        to='https://opensource.org/license/mit/'
-        :hoverable='false'
-      >
-        MIT License
-      </AppLink>
-      ，Copyright &copy; 2023 星光工作室
-    </TypographyText>
-    <TypographyText class='footer-copy footer-copy--brand'>
-      本版本由云痕科技（yhkj-nb）二次开发维护
-    </TypographyText>
   </div>
 </template>
 
@@ -105,14 +81,5 @@ const repositoryLinks: FooterItem[] = [{
 .footer-sep--group {
   color: var(--color-text-2);
   margin: 0 2px;
-}
-.footer-copy {
-  font-size: 12px;
-  color: var(--color-text-3);
-  text-align: center;
-}
-.footer-copy--brand {
-  color: var(--winui-accent, #0078d4);
-  font-weight: 600;
 }
 </style>
