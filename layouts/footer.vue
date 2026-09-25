@@ -72,7 +72,7 @@ const repositoryLinks: FooterItem[] = [{
       >
         MIT License
       </AppLink>
-      ，Copyright &copy; 2023 星光工作室
+      ，Copyright &copy; 2026云痕科技
     </TypographyText>
     <TypographyText class='footer-copy footer-copy--brand'>
       本版本由云痕科技（yhkj-nb）二次开发维护
