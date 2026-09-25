@@ -37,6 +37,13 @@ const titleText = 'Fanbook 机器人工具';
   display: none;
 }
 
+/* 防止任何子元素（如 100vw 的页脚）导致的横向滚动 */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 #__nuxt {
   display: flex;
   min-height: 100vh;
@@ -47,7 +54,8 @@ header, footer {
 }
 footer {
   display: flex;
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
   margin-bottom: 8px !important;
   align-self: baseline;
   flex-direction: column;
