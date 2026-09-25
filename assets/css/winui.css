@@ -89,24 +89,156 @@ article {
   max-width: 880px !important;
   box-sizing: border-box !important;
 }
-/* 手机端 / 窄屏：占满可用宽度并保留安全边距，不再限制最大宽度。
-   基于视口宽度的媒体查询，同时覆盖真机（body.mobile）与窗口缩放 / 平板场景。 */
+/* ============================================================
+ * 手机端 / 窄屏适配（所有页面统一，≤768px）
+ * 基于视口宽度，同时覆盖真机（body.mobile）与窗口缩放 / 平板场景。
+ * ============================================================ */
 @media (max-width: 768px) {
+  /* 内容容器：占满可用宽度并保留安全边距，不再限制最大宽度 */
   .form-wrapper,
   .form,
   article {
     width: 92vw !important;
     max-width: 100% !important;
   }
-}
-/* 首页功能入口卡片：窄屏下允许换行并居中，固定 96px 不收缩 */
-@media (max-width: 768px) {
+  /* 卡片内边距收紧，把宽度让给内容 */
+  .form-wrapper {
+    margin: 12px auto 16px !important;
+    padding: 16px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  /* ---------- 表单：label 移到控件上方，控件占满整行 ----------
+     Arco 的 auto-label-width 会给 label 固定宽度（flex: <width>px），
+     窄屏下会把输入框挤得很窄，这里统一改为上下两行布局。 */
+  .arco-form-item {
+    flex-wrap: wrap !important;
+  }
+  .arco-form-item-label-col,
+  .arco-form-item-label-col.arco-form-item-label-col-flex {
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: flex-start !important;
+    margin-bottom: 6px !important;
+    padding: 0 !important;
+    line-height: 1.5 !important;
+    white-space: normal !important;
+    text-align: left !important;
+  }
+  .arco-form-item-label-col > .arco-form-item-label {
+    font-size: 13px !important;
+    white-space: normal !important;
+  }
+  .arco-form-item-wrapper-col,
+  .arco-form-item-wrapper-flex {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    min-height: 0 !important;
+  }
+  .arco-form-item {
+    margin-bottom: 16px !important;
+  }
+  /* 区块标题（h4）在手机上略小 */
+  .arco-form h4,
+  h4 {
+    font-size: 15px !important;
+  }
+
+  /* ---------- 输入控件：字号提到 16px，避免 iOS 聚焦时自动放大整页 ---------- */
+  .arco-input,
+  .arco-select-view-value,
+  .arco-select-view-input,
+  .arco-textarea {
+    font-size: 16px !important;
+  }
+  .arco-input-wrapper,
+  .arco-select-view {
+    min-height: 40px !important;
+  }
+
+  /* ---------- 目标用户搜索行 ---------- */
+  .user-search {
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
+  .user-search .arco-input-wrapper {
+    height: 42px !important;
+  }
+  .user-search .arco-input {
+    font-size: 16px !important;
+  }
+  .user-search .arco-btn {
+    height: 42px !important;
+    padding: 0 14px !important;
+    font-size: 14px !important;
+  }
+  .user-search-select .arco-select-view {
+    height: 42px !important;
+  }
+  .user-picked {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .user-picked-id {
+    word-break: break-all;
+  }
+
+  /* ---------- 荣誉卡槽网格：手机端两列自适应 ---------- */
+  .credit-grid {
+    gap: 10px !important;
+  }
+  .credit-card {
+    width: calc(50% - 5px) !important;
+    box-sizing: border-box;
+  }
+
+  /* ---------- 徽章预览卡片 ---------- */
+  .preview-card {
+    padding: 12px !important;
+  }
+  .preview-header-name {
+    font-size: 16px !important;
+  }
+  .preview-slot-value {
+    font-size: 15px !important;
+  }
+
+  /* ---------- 页头 / 公告 ---------- */
+  .arco-page-header-title {
+    font-size: 16px !important;
+  }
+  .alert-item {
+    padding: 10px 12px !important;
+  }
+  .alert-item .arco-alert-content {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ---------- 首页功能入口卡片：允许换行并居中 ---------- */
   .home-card {
     flex: 0 0 auto !important;
   }
   .home .arco-row {
     flex-wrap: wrap !important;
     justify-content: center;
+  }
+  .home .arco-card {
+    margin-bottom: 12px !important;
+  }
+
+  /* ---------- 页脚 ---------- */
+  .footer-links {
+    font-size: 13px;
+  }
+
+  /* ---------- 弹窗 ---------- */
+  .arco-modal {
+    max-width: 92vw !important;
+  }
+  .arco-modal-header {
+    height: auto !important;
   }
 }
 
