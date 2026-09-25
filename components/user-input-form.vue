@@ -243,8 +243,10 @@ async function resolveInput() {
         :src='picked.avatar'
         :alt='picked.name'
       >
-      <span class='user-picked-name'>{{ picked.name || '已选择用户' }}</span>
-      <span class='user-picked-id'>#{{ picked.id }}</span>
+      <div class='user-picked-meta'>
+        <span class='user-picked-name'>{{ picked.name || '已选择用户' }}</span>
+        <span class='user-picked-id'>#{{ picked.id }}</span>
+      </div>
       <a class='user-picked-clear' @click='onInput("")'>清除</a>
     </div>
     <div v-else-if='hint' class='user-hint'>
@@ -308,12 +310,20 @@ async function resolveInput() {
 .user-picked {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 10px;
   padding: 8px 12px;
   border: 1px solid rgba(0, 120, 212, .25);
   border-radius: 6px;
   background: rgba(0, 120, 212, .06);
+}
+/* 昵称与 ID 纵向排列（不并排），窄屏自动换行到下一行 */
+.user-picked-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 .user-picked-avatar {
   flex: none;
@@ -327,6 +337,7 @@ async function resolveInput() {
   font-size: 13px;
   font-weight: 600;
   color: var(--color-text-1);
+  word-break: break-word;
 }
 .user-picked-id {
   font-size: 12px;
