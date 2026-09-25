@@ -172,28 +172,56 @@ h4 {
   user-select: none;
 }
 
-/* 用户搜索结果下拉项 */
-.user-search {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+/* ---------- 用户搜索下拉弹层（WinUI ComboBox 风格） ---------- */
+.arco-select-dropdown {
+  padding: 6px !important;
+  border: 1px solid var(--color-border-1) !important;
+  border-radius: var(--winui-radius-card) !important;
+  box-shadow: var(--winui-shadow-2) !important;
+  background: #fff !important;
 }
+.arco-select-dropdown .arco-select-option {
+  border-radius: 4px !important;
+  padding: 8px 10px !important;
+  transition: background-color .12s ease;
+}
+.arco-select-dropdown .arco-select-option:hover,
+.arco-select-dropdown .arco-select-option.arco-select-option-hover {
+  background-color: var(--color-fill-1) !important;
+}
+.arco-select-dropdown .arco-select-option.arco-select-option-selected {
+  background-color: rgba(0, 120, 212, .10) !important;
+  color: var(--winui-accent) !important;
+  font-weight: 600;
+}
+
+/* 搜索结果项 */
 .user-search-result {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 .user-search-avatar {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
   background: var(--color-fill-2);
+  flex: none;
 }
 .user-search-meta {
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
+  line-height: 1.25;
+  min-width: 0;
+}
+.user-search-meta > span:first-child {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .user-search-id {
   font-size: 11px;
