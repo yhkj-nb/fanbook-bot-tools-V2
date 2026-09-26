@@ -30,12 +30,16 @@ definePageMeta({
   requiredAuth: true,
 });
 
+interface UserEntry {
+  id?: bigint;
+}
 interface Input {
   guild?: bigint;
-  user?: bigint;
+  users: UserEntry[];
   credit: GuildCredit;
 }
 const input = reactive({
+  users: [{} as UserEntry],
   credit: {
     id: '',
     authority: {
@@ -60,6 +64,9 @@ const REQUEIRE_RULE: FieldRule = {
 type Status = 'default' | 'loading';
 const status = ref('default' as Status);
 
+/** 批量发放进度。 */
+const progress = reactive({ current: 0, total: 0 });
+
 const bot = new Bot(useAccountStore().activeBotToken as string);
 
 function generateId() {
@@ -71,38 +78,73 @@ function bigintValidator(value: string, cb: (error?: string) => void) {
   else cb(undefined);
 }
 
+/** 新增一个用户选择框。 */
+function addUser() {
+  input.users.push({});
+}
+/** 移除指定下标的目标用户（至少保留一个）。 */
+function removeUser(i: number) {
+  if (input.users.length > 1) input.users.splice(i, 1);
+}
+
 async function onSubmit() {
   status.value = 'loading';
-  try {
-    await bot.setGuildUserCredit({
-      guild: input.guild,
-      user: input.user as bigint,
-      credit: input.credit,
-    });
-    Message.success({
-      content: '设置成功',
+  const ids = input.users
+    .map(u => u.id)
+    .filter((v): v is bigint => v !== undefined);
+  if (!input.guild || ids.length === 0) {
+    Message.warning({
+      content: '请至少选择一个有效的目标用户',
       duration: 2500,
     });
-  } catch (err: any) {
-    console.error(err);
-    //如果错误码在BotErrorCode中，则显示错误码对应的错误信息
-    if (err.response?.data?.error_code in BotErrorCode) {
-      Message.error({
-        content: '设置失败：'+BotErrorCode[err.response?.data?.error_code],
-        duration: 6000,
+    status.value = 'default';
+    return;
+  }
+  progress.total = ids.length;
+  progress.current = 0;
+  let ok = 0;
+  let fail = 0;
+  const failures: string[] = [];
+  for (const uid of ids) {
+    progress.current++;
+    try {
+      await bot.setGuildUserCredit({
+        guild: input.guild,
+        user: uid,
+        credit: input.credit,
       });
-    } else {
-    Message.error({
-      content: '设置失败：'+err.response?.data?.description,
+      ok++;
+    } catch (err: any) {
+      fail++;
+      const desc = err.response?.data?.description ?? '未知错误';
+      const code = err.response?.data?.error_code;
+      const msg = (code && BotErrorCode[code]) ? BotErrorCode[code] : desc;
+      if (!failures.includes(msg)) failures.push(msg);
+      console.error(err);
+    }
+  }
+  progress.current = progress.total;
+  if (fail === 0) {
+    Message.success({
+      content: `已成功发放给 ${ok} 个用户`,
+      duration: 3000,
+    });
+  } else {
+    Message.warning({
+      content: `${ok} 个成功，${fail} 个失败（${failures.slice(0, 2).join('；')}）`,
       duration: 6000,
     });
-  }}
+  }
   status.value = 'default';
 }
 </script>
 
 <template>
-  <Spin class='form-wrapper' :loading='status === "loading"' tip='正在执行'>
+  <Spin
+    class='form-wrapper'
+    :loading='status === "loading"'
+    :tip='progress.total ? `正在发放第 ${progress.current} / ${progress.total} 个用户` : "正在执行"'
+  >
     <Form
       class='form'
       :model='input'
@@ -115,12 +157,38 @@ async function onSubmit() {
         field='guild'
         required
       />
-      <UserInputForm
-        v-model='input.user'
-        :guild='input.guild'
-        field='user'
-        required
-      />
+
+      <TypographyTitle :heading='4'>目标用户（可多选）</TypographyTitle>
+      <div
+        v-for='(u, i) in input.users'
+        :key='i'
+        class='user-row'
+      >
+        <UserInputForm
+          v-model='u.id'
+          :guild='input.guild'
+          :field='"users[" + i + "].id"'
+          required
+        />
+        <Button
+          v-if='input.users.length > 1'
+          type='text'
+          status='danger'
+          class='user-remove'
+          @click='removeUser(i)'
+        >
+          移除
+        </Button>
+      </div>
+      <Button
+        type='outline'
+        long
+        class='user-add'
+        @click='addUser'
+      >
+        ＋ 添加用户
+      </Button>
+
       <FormItem
         label='自定义 ID'
         field='credit.id'
@@ -170,61 +238,11 @@ async function onSubmit() {
       >
         <Input v-model='input.credit.title.icon' />
       </FormItem>
-      <TypographyTitle :heading='4'>勋章预览</TypographyTitle>
-      <div class='credit-preview'>
-        <div class='preview-card'>
-          <div class='preview-header'>
-            <img
-              v-if='input.credit.authority.icon'
-              class='preview-header-icon'
-              :src='input.credit.authority.icon'
-              alt='标题栏图片'
-            >
-            <div
-              v-else
-              class='preview-header-icon'
-            />
-            <div class='preview-header-name'>
-              {{ input.credit.authority.name || '这是标题栏' }}
-            </div>
-          </div>
-          <div class='preview-body'>
-            <div
-              v-for='(slot, i) in (input.credit.slots?.[0] ?? [])'
-              :key='i'
-              class='preview-slot'
-            >
-              <img
-                v-if='slot.image'
-                class='preview-slot-img'
-                :src='slot.image'
-                :alt='slot.value'
-              >
-              <div class='preview-slot-value'>
-                {{ slot.value || '这是插槽' }}
-              </div>
-            </div>
-              <div
-                v-if='!(input.credit.slots?.[0]?.length)'
-                class='preview-slot-value'
-              >
-                这是插槽
-              </div>
-            </div>
-            <div class='preview-watermark'>@云痕科技</div>
-          </div>
-          <div class='preview-nickname'>
-          <img
-            v-if='input.credit.title.icon'
-            class='preview-nick-icon'
-            :src='input.credit.title.icon'
-            alt='勋章图标'
-          >
-          <span class='preview-nick-text'>用户昵称（勋章显示在昵称左侧）</span>
-        </div>
-      </div>
       <FormItem class='operations'>
-        <Button type='primary' html-type='submit'>
+        <Button
+          type='primary'
+          html-type='submit'
+        >
           设置荣誉卡槽
         </Button>
       </FormItem>
@@ -250,76 +268,25 @@ h4 {
   border-bottom: 1px solid var(--color-text-4);
   text-align: center;
 }
+/* 每个用户选择框独占一行，右侧附带「移除」 */
+.user-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.user-row :deep(.user-field) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.user-remove {
+  flex: none;
+  margin-top: 0;
+  height: 38px;
+}
+.user-add {
+  margin: 10px 0 4px;
+}
 .operations {
   margin-top: 4px;
-}
-.credit-preview {
-  margin-bottom: 16px;
-}
-.preview-card {
-  padding: 16px;
-  border: 1px solid var(--color-border-2);
-  border-radius: 12px;
-  background: var(--color-bg-2);
-}
-.preview-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.preview-header-icon {
-  flex: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  object-fit: cover;
-  background: var(--color-fill-2);
-}
-.preview-header-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text-1);
-}
-.preview-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 96px;
-  margin-top: 12px;
-}
-.preview-slot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.preview-slot-img {
-  max-width: 100%;
-  max-height: 120px;
-  border-radius: 8px;
-  object-fit: contain;
-}
-.preview-slot-value {
-  font-size: 16px;
-  color: var(--color-text-1);
-}
-.preview-nickname {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  padding-left: 4px;
-}
-.preview-nick-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  object-fit: contain;
-}
-.preview-nick-text {
-  font-size: 14px;
-  color: var(--color-text-2);
 }
 </style>
