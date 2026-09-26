@@ -3,7 +3,7 @@
   "installCommand": "pnpm install",
   "buildCommand": "pnpm run build",
   "outputDirectory": ".output/public",
-  "nodeVersion": "20.x",
+  "framework": null,
   "headers": [
     {
       "source": "/_nuxt/static/(.*)",
