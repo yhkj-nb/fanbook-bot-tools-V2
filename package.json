@@ -2,6 +2,9 @@
   "name": "@starlight-dev-team/fanbook-bot-tools",
   "packageManager": "pnpm@8.15.5",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "sh scripts/build.sh",
     "start": "sh scripts/start.sh",
