@@ -13,8 +13,6 @@ import { useAccountStore } from '~~/stores/account';
 import { tryBigintify } from '~~/utils/util';
 import {
   BotErrorCode,
-  searchGuildMembers,
-  type SearchedUser,
 } from '~/utils/bot';
 
 import {
@@ -24,7 +22,6 @@ import {
   Input,
   Message,
   Spin,
-  Switch,
   TypographyTitle,
 } from '@arco-design/web-vue';
 import type { FieldRule } from '@arco-design/web-vue';
@@ -36,11 +33,11 @@ definePageMeta({
 
 interface Input {
   guild?: bigint;
-  user?: bigint;
+  users: bigint[];
   credit: GuildCredit;
 }
 const input = reactive({
-  user: undefined,
+  users: [] as bigint[],
   credit: {
     id: '',
     authority: {
@@ -70,73 +67,6 @@ const progress = reactive({ current: 0, total: 0 });
 
 const bot = new Bot(useAccountStore().activeBotToken as string);
 
-/** 是否开启多选模式（默认单选）。 */
-const multi = ref(false);
-
-// ===== 多选用户（搜索 + 勾选）=====
-/** 搜索关键词。 */
-const query = ref('');
-/** 是否正在搜索。 */
-const searching = ref(false);
-/** 搜索结果列表。 */
-const results = ref([] as SearchedUser[]);
-/** 已勾选的用户。 */
-const selectedUsers = ref([] as SearchedUser[]);
-
-function isSelected(id: string) {
-  return selectedUsers.value.some(u => u.id === id);
-}
-/** 点击结果项：勾选 / 取消勾选。 */
-function toggle(u: SearchedUser) {
-  if (isSelected(u.id)) {
-    selectedUsers.value = selectedUsers.value.filter(x => x.id !== u.id);
-  } else {
-    selectedUsers.value = [...selectedUsers.value, u];
-  }
-}
-/** 移除已选用户。 */
-function removeSelect(id: string) {
-  selectedUsers.value = selectedUsers.value.filter(x => x.id !== id);
-}
-
-/** 按用户名 / 昵称搜索服务器成员，结果供逐个勾选。 */
-async function searchMembers() {
-  const q = query.value.trim();
-  if (!q) {
-    results.value = [];
-    return;
-  }
-  if (!input.guild) {
-    Message.warning({
-      content: '请先填写服务器 ID',
-      duration: 2500,
-    });
-    return;
-  }
-  searching.value = true;
-  try {
-    results.value = await searchGuildMembers(input.guild, q);
-  } catch {
-    results.value = [];
-  }
-  searching.value = false;
-}
-
-/** 输入框回车：完整用户 ID 直接加入已选；否则执行搜索。 */
-async function resolveQuery() {
-  const q = query.value.trim();
-  if (!q) return;
-  if (/^\d{15,}$/.test(q)) {
-    // 雪崩 ID 直接识别并加入
-    if (!isSelected(q)) {
-      selectedUsers.value = [...selectedUsers.value, { id: q, name: '', username: '', avatar: '' }];
-    }
-    query.value = '';
-    return;
-  }
-  await searchMembers();
-}
-
 function generateId() {
   input.credit.id = nanoid();
 }
@@ -146,18 +76,12 @@ function bigintValidator(value: string, cb: (error?: string) => void) {
   else cb(undefined);
 }
 
-/** 收集当前模式下要发放的目标用户 ID 。 */
-function targetIds(): bigint[] {
-  if (multi.value) return selectedUsers.value.map(u => BigInt(u.id));
-  return input.user ? [input.user] : [];
-}
-
 async function onSubmit() {
   status.value = 'loading';
-  const ids = targetIds();
+  const ids = input.users;
   if (!input.guild || ids.length === 0) {
     Message.warning({
-      content: multi.value ? '请至少勾选一个有效的目标用户' : '请先选择目标用户',
+      content: '请至少选择一名目标用户',
       duration: 2500,
     });
     status.value = 'default';
@@ -222,116 +146,15 @@ async function onSubmit() {
       />
 
       <TypographyTitle :heading='4'>目标用户</TypographyTitle>
-      <!-- 多选开关：默认单选；打开后切换为可勾选的多选模式 -->
-      <div class='user-mode'>
-        <Switch v-model='multi' />
-        <span class='user-mode-label'>
-          {{ multi ? '多选模式（可逐个勾选多人）' : '单选模式' }}
-        </span>
-      </div>
 
-      <!-- 单选：单个用户搜索选择 -->
+      <!-- 多选用户：默认单选体验，搜索出结果后即可逐个勾选多人 -->
       <UserInputForm
-        v-if='!multi'
-        v-model='input.user'
+        v-model='input.users'
         :guild='input.guild'
-        field='user'
+        field='users'
+        multiple
         required
       />
-
-      <!-- 多选：搜索 + 勾选列表 -->
-      <div
-        v-else
-        class='user-multi'
-      >
-        <div class='user-search'>
-          <Input
-            v-model='query'
-            placeholder='搜索用户名 / 昵称，或输入用户 ID 后回车直接添加'
-            allow-clear
-            @press-enter='resolveQuery'
-            @clear='() => { query = ""; results = []; }'
-          >
-            <template #prefix>
-              <span class='user-search-icon' aria-hidden='true'>
-                <svg viewBox='0 0 1024 1024' width='15' height='15'>
-                  <path fill='currentColor' d='M448 64a384 384 0 0 1 307.2 614.4l219.9 219.9a42.7 42.7 0 0 1-60.4 60.4l-219.9-219.9A384 384 0 1 1 448 64zm0 85.3a298.7 298.7 0 1 0 0 597.4 298.7 298.7 0 0 0 0-597.4z' />
-                </svg>
-              </span>
-            </template>
-          </Input>
-          <Button
-            type='primary'
-            :loading='searching'
-            @click='searchMembers'
-          >
-            搜索
-          </Button>
-        </div>
-
-        <!-- 搜索结果：逐个勾选 -->
-        <div
-          v-if='results.length'
-          class='user-result-list'
-        >
-          <div
-            v-for='u in results'
-            :key='u.id'
-            class='user-result'
-            :class='{ selected: isSelected(u.id) }'
-            @click='toggle(u)'
-          >
-            <img
-              v-if='u.avatar'
-              class='user-result-avatar'
-              :src='u.avatar'
-              :alt='u.name'
-            >
-            <div class='user-result-meta'>
-              <span class='user-result-name'>{{ u.name || '未命名用户' }}</span>
-              <span class='user-result-id'>{{ u.id }}</span>
-            </div>
-            <span class='user-result-check'>
-              {{ isSelected(u.id) ? '✓ 已选' : '点击选择' }}
-            </span>
-          </div>
-        </div>
-        <div
-          v-else-if='query && !searching'
-          class='user-hint'
-        >
-          未找到匹配用户，可换关键词或改用用户 ID
-        </div>
-
-        <!-- 已选用户 -->
-        <div
-          v-if='selectedUsers.length'
-          class='user-selected'
-        >
-          <div class='user-selected-title'>
-            已选 {{ selectedUsers.length }} 人：
-          </div>
-          <div class='user-selected-list'>
-            <span
-              v-for='u in selectedUsers'
-              :key='u.id'
-              class='user-chip'
-            >
-              <img
-                v-if='u.avatar'
-                class='user-chip-avatar'
-                :src='u.avatar'
-                :alt='u.name'
-              >
-              <span class='user-chip-name'>{{ u.name || u.id }}</span>
-              <a
-                class='user-chip-remove'
-                @click='removeSelect(u.id)'
-              >×</a>
-            </span>
-          </div>
-        </div>
-      </div>
 
       <FormItem
         label='自定义 ID'
@@ -411,165 +234,6 @@ h4 {
   padding-bottom: 2px;
   border-bottom: 1px solid var(--color-text-4);
   text-align: center;
-}
-/* 多选开关 */
-.user-mode {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.user-mode-label {
-  font-size: 13px;
-  color: var(--color-text-2);
-}
-/* 多选用户：搜索行 + 结果勾选列表 + 已选标签 */
-.user-multi {
-  margin-bottom: 8px;
-}
-.user-search {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-}
-.user-search :deep(.arco-input-wrapper) {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 38px;
-  padding: 0 8px 0 12px;
-  border-radius: 6px;
-  border: 1px solid var(--color-border-2);
-  background: #fff;
-}
-.user-search :deep(.arco-btn) {
-  flex: none;
-  height: 38px;
-  padding: 0 18px;
-}
-.user-search-icon {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 6px;
-  color: var(--color-text-3);
-}
-.user-result-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
-  max-height: 240px;
-  overflow-y: auto;
-  padding: 4px;
-  border: 1px solid var(--color-border-2);
-  border-radius: 8px;
-  background: var(--color-bg-2);
-}
-.user-result {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all .12s;
-}
-.user-result:hover {
-  background: var(--color-fill-1);
-}
-.user-result.selected {
-  border-color: rgb(var(--primary-6));
-  background: rgba(var(--primary-6), .08);
-}
-.user-result-avatar {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: var(--color-fill-2);
-}
-.user-result-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.user-result-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.user-result-id {
-  font-size: 12px;
-  color: var(--color-text-3);
-}
-.user-result-check {
-  margin-left: auto;
-  flex: none;
-  font-size: 12px;
-  color: var(--color-text-3);
-}
-.user-result.selected .user-result-check {
-  color: rgb(var(--primary-6));
-  font-weight: 600;
-}
-.user-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--color-text-3);
-}
-.user-selected {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid rgba(0, 120, 212, .25);
-  border-radius: 8px;
-  background: rgba(0, 120, 212, .06);
-}
-.user-selected-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-1);
-  margin-bottom: 8px;
-}
-.user-selected-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.user-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border: 1px solid var(--color-border-2);
-  border-radius: 16px;
-  background: var(--color-bg-2);
-}
-.user-chip-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.user-chip-name {
-  font-size: 12px;
-  color: var(--color-text-1);
-  max-width: 140px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.user-chip-remove {
-  font-size: 14px;
-  color: var(--color-text-3);
-  cursor: pointer;
-}
-.user-chip-remove:hover {
-  color: rgb(var(--danger-6));
 }
 .operations {
   margin-top: 4px;
