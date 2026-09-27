@@ -24,6 +24,7 @@ import {
   Input,
   Message,
   Spin,
+  Switch,
   TypographyTitle,
 } from '@arco-design/web-vue';
 import type { FieldRule } from '@arco-design/web-vue';
@@ -35,9 +36,11 @@ definePageMeta({
 
 interface Input {
   guild?: bigint;
+  user?: bigint;
   credit: GuildCredit;
 }
 const input = reactive({
+  user: undefined,
   credit: {
     id: '',
     authority: {
@@ -66,6 +69,9 @@ const status = ref('default' as Status);
 const progress = reactive({ current: 0, total: 0 });
 
 const bot = new Bot(useAccountStore().activeBotToken as string);
+
+/** 是否开启多选模式（默认单选）。 */
+const multi = ref(false);
 
 // ===== 多选用户（搜索 + 勾选）=====
 /** 搜索关键词。 */
@@ -140,12 +146,18 @@ function bigintValidator(value: string, cb: (error?: string) => void) {
   else cb(undefined);
 }
 
+/** 收集当前模式下要发放的目标用户 ID 。 */
+function targetIds(): bigint[] {
+  if (multi.value) return selectedUsers.value.map(u => BigInt(u.id));
+  return input.user ? [input.user] : [];
+}
+
 async function onSubmit() {
   status.value = 'loading';
-  const ids = selectedUsers.value.map(u => BigInt(u.id));
+  const ids = targetIds();
   if (!input.guild || ids.length === 0) {
     Message.warning({
-      content: '请至少勾选一个有效的目标用户',
+      content: multi.value ? '请至少勾选一个有效的目标用户' : '请先选择目标用户',
       duration: 2500,
     });
     status.value = 'default';
@@ -209,8 +221,29 @@ async function onSubmit() {
         required
       />
 
-      <TypographyTitle :heading='4'>目标用户（多选）</TypographyTitle>
-      <div class='user-multi'>
+      <TypographyTitle :heading='4'>目标用户</TypographyTitle>
+      <!-- 多选开关：默认单选；打开后切换为可勾选的多选模式 -->
+      <div class='user-mode'>
+        <Switch v-model='multi' />
+        <span class='user-mode-label'>
+          {{ multi ? '多选模式（可逐个勾选多人）' : '单选模式' }}
+        </span>
+      </div>
+
+      <!-- 单选：单个用户搜索选择 -->
+      <UserInputForm
+        v-if='!multi'
+        v-model='input.user'
+        :guild='input.guild'
+        field='user'
+        required
+      />
+
+      <!-- 多选：搜索 + 勾选列表 -->
+      <div
+        v-else
+        class='user-multi'
+      >
         <div class='user-search'>
           <Input
             v-model='query'
@@ -378,6 +411,17 @@ h4 {
   padding-bottom: 2px;
   border-bottom: 1px solid var(--color-text-4);
   text-align: center;
+}
+/* 多选开关 */
+.user-mode {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.user-mode-label {
+  font-size: 13px;
+  color: var(--color-text-2);
 }
 /* 多选用户：搜索行 + 结果勾选列表 + 已选标签 */
 .user-multi {
