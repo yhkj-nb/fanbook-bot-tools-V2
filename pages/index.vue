@@ -3,9 +3,11 @@ import { Card, Row, TypographyTitle } from '@arco-design/web-vue';
 
 import {
   IconDelete,
+  IconExclamationCircle,
   IconList,
   IconRefresh,
   IconRobot,
+  IconSafe,
   IconStar,
 } from '@arco-design/web-vue/es/icon';
 
@@ -58,6 +60,15 @@ const features: Array<{
       icon: <IconRefresh size={36} />,
       content: '修改勋章',
       link: 'feature/modify-credit',
+    }],
+  },
+  {
+    title: '运营工具',
+    icon: <IconSafe size={18} />,
+    children: [{
+      icon: <IconExclamationCircle size={36} />,
+      content: '风险检测',
+      link: 'feature/risk-check',
     }],
   },
 ];
