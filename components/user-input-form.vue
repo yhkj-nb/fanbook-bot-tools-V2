@@ -1,14 +1,10 @@
 <!--
   表单内的目标用户字段。
-  单一输入框同时支持：
-  - 输入用户名 / 昵称 → 搜索服务器成员，下拉选择后自动回填用户 ID 与头像；
-  - 输入完整用户 ID（≥ 15 位）→ 直接识别；
-  - 输入用户短 ID → 优先尝试解析。
-
-  多选模式（multiple）：
-  - 默认仍是单选体验（只选一个人即可）；
-  - 搜索出结果后，下拉列表每一项可点击勾选，可逐个勾选多人（类似群发 @ 人）；
-  - 已选用户以标签形式展示，可单独移除。
+  - 默认单选：输入用户名 / 昵称 → 搜索服务器成员，下拉选择后自动回填用户 ID 与头像；
+    也可直接输入完整用户 ID（≥ 15 位）或短 ID。
+  - 多选模式（multiple）：渲染为 Arco Select 多选下拉，点开下拉即可逐个勾选多人
+    （类似群发 @ 人），已选用户自动变成标签；也支持直接输入用户 ID 回车添加。
+  注意：所有头像 <img> 一律用 v-show，避免动态挂载触发 Arco 2.55.x 的 insertBefore 崩溃。
 -->
 
 <script lang="ts" setup>
@@ -52,13 +48,11 @@ const emit = defineEmits([
 /** 字段状态。 */
 type Status = 'error' | 'success' | 'warning' | 'validating' | undefined;
 
-/** 输入框文本。 */
+/** 输入框文本（单选）。 */
 const text = ref(props.modelValue && !Array.isArray(props.modelValue) ? String(props.modelValue) : '');
 /** 已确认的用户（单选搜索选中时带昵称与头像）。 */
 const picked = ref(undefined as SearchedUser | undefined);
-/** 多选时已勾选的用户。 */
-const selectedUsers = ref([] as SearchedUser[]);
-/** 搜索候选列表。 */
+/** 搜索候选列表（单选 / 多选共用）。 */
 const results = ref([] as SearchedUser[]);
 /** 是否正在搜索。 */
 const searching = ref(false);
@@ -66,6 +60,31 @@ const searching = ref(false);
 const hint = ref('');
 /** 字段状态（手动控制，避免输入过程中误报「本项必填」）。 */
 const status = ref(undefined as Status);
+
+/** 多选：当前已选 ID。 */
+const selectedIds = ref<string[]>(
+  Array.isArray(props.modelValue) ? props.modelValue.map((v) => String(v)) : [],
+);
+/** 多选：已知用户（id → SearchedUser），累积搜索结果与直接添加的 ID。 */
+const knownUsers = ref({} as Record<string, SearchedUser>);
+
+/** 已选用户（多选，由 selectedIds + knownUsers 派生）。 */
+const selectedUsers = computed<SearchedUser[]>(() =>
+  selectedIds.value.map((id) => knownUsers.value[id]).filter(Boolean),
+);
+/** 下拉选项：当前搜索结果 + 已选但不在结果中的用户（保证标签有名字）。 */
+const optionList = computed<SearchedUser[]>(() => {
+  const seen = new Set(results.value.map((u) => u.id));
+  const extra = selectedUsers.value.filter((u) => !seen.has(u.id));
+  return [...results.value, ...extra];
+});
+
+/** 父组件清空 modelValue 时同步清空已选。 */
+watch(() => props.modelValue, (v) => {
+  if (Array.isArray(v) && v.length === 0 && selectedIds.value.length) {
+    selectedIds.value = [];
+  }
+});
 
 /** 合并属性到 rules 中。 */
 function wrapRules(rules: RuleType[]): RuleType[] {
@@ -87,27 +106,97 @@ function wrapRules(rules: RuleType[]): RuleType[] {
 }
 const rules = wrapRules(props.rules);
 
-/** 是否勾选了某用户。 */
-function isSelected(id: string) {
-  return selectedUsers.value.some(u => u.id === id);
+/** 把已勾选用户同步给父组件。 */
+function emitMultiple() {
+  emit('update:model-value', selectedUsers.value.map((u) => BigInt(u.id)));
 }
-/** 勾选 / 取消勾选某个用户。 */
+
+function isSelected(id: string) {
+  return selectedIds.value.includes(id);
+}
+/** 多选：勾选 / 取消勾选某个用户（供列表项点击调用）。 */
 function toggleSelect(u: SearchedUser) {
   if (isSelected(u.id)) {
-    selectedUsers.value = selectedUsers.value.filter(x => x.id !== u.id);
+    selectedIds.value = selectedIds.value.filter((x) => x !== u.id);
   } else {
-    selectedUsers.value = [...selectedUsers.value, u];
+    selectedIds.value = [...selectedIds.value, u.id];
+    knownUsers.value = { ...knownUsers.value, [u.id]: u };
   }
   emitMultiple();
 }
-/** 移除已选用户。 */
+/** 多选：移除已选用户（供标签 × 调用）。 */
 function removeSelected(id: string) {
-  selectedUsers.value = selectedUsers.value.filter(x => x.id !== id);
+  selectedIds.value = selectedIds.value.filter((x) => x !== id);
   emitMultiple();
 }
-/** 把已勾选用户同步给父组件。 */
-function emitMultiple() {
-  emit('update:model-value', selectedUsers.value.map(u => BigInt(u.id)));
+
+/** 把搜索到的用户并入已知用户表。 */
+function mergeKnown(list: SearchedUser[]) {
+  const next = { ...knownUsers.value };
+  for (const u of list) next[u.id] = u;
+  knownUsers.value = next;
+}
+
+/** 多选：直接按 ID 添加一名用户（完整雪崩 ID 或短 ID），命中返回 true。 */
+async function addUserById(query: string): Promise<boolean> {
+  // 完整雪崩 ID（≥ 15 位）
+  if (/^\d{15,}$/.test(query)) {
+    if (!isSelected(query)) {
+      knownUsers.value = { ...knownUsers.value, [query]: { id: query, name: '', username: '', avatar: '' } };
+      selectedIds.value = [...selectedIds.value, query];
+      emitMultiple();
+    }
+    text.value = '';
+    return true;
+  }
+  // 短 ID：尝试解析
+  if (props.guild && /^\d+$/.test(query)) {
+    try {
+      const user: any = await getCurrentBot().getUserByShortId({ guild: props.guild, id: Number(query) });
+      const su: SearchedUser = {
+        id: String(user.id),
+        name: user.first_name || user.username || '',
+        username: user.username || '',
+        avatar: user.avatar || '',
+      };
+      if (!isSelected(su.id)) {
+        knownUsers.value = { ...knownUsers.value, [su.id]: su };
+        selectedIds.value = [...selectedIds.value, su.id];
+        emitMultiple();
+      }
+      text.value = '';
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+/** 多选：远程搜索（Arco Select @search）。 */
+async function onRemoteSearch(query: string) {
+  const q = query.trim();
+  if (!q) { results.value = []; return; }
+  if (await addUserById(q)) { results.value = []; return; }
+  if (!props.guild) { hint.value = '请先填写服务器 ID'; return; }
+  searching.value = true;
+  try {
+    const list = await searchGuildMembers(props.guild, q);
+    results.value = list;
+    mergeKnown(list);
+    if (list.length === 0) hint.value = '未找到该用户，请检查用户名或改用用户 ID';
+    else hint.value = '';
+  } catch {
+    hint.value = '搜索失败，请稍后重试';
+  }
+  searching.value = false;
+}
+
+/** 多选：选项变化。 */
+function onMultiChange(ids: string[]) {
+  selectedIds.value = ids;
+  emitMultiple();
+  if (ids.length) hint.value = '';
 }
 
 /** 确认并写入单个用户 ID （单选）。 */
@@ -148,30 +237,20 @@ function onInput(v: string) {
 /** 从候选中选中某个用户（单选下拉）。 */
 function onPick(value: unknown) {
   const key = String(value);
-  const user = results.value.find(u => u.id === key);
+  const user = results.value.find((u) => u.id === key);
   if (user) setUser(BigInt(user.id), user);
 }
 
-/** 解析输入内容：用户 ID / 短 ID / 用户名搜索。 */
+/** 解析输入内容：用户 ID / 短 ID / 用户名搜索（单选）。 */
 async function resolveInput() {
   const query = text.value.trim();
   if (!query) {
-    if (!props.multiple) {
-      status.value = 'error';
-      hint.value = '请输入用户名 / 昵称，或直接填写用户 ID';
-    }
+    status.value = 'error';
+    hint.value = '请输入用户名 / 昵称，或直接填写用户 ID';
     return;
   }
   // 完整用户 ID（雪崩 ID）直接识别
   if (/^\d{15,}$/.test(query)) {
-    if (props.multiple) {
-      if (!isSelected(query)) {
-        selectedUsers.value = [...selectedUsers.value, { id: query, name: '', username: '', avatar: '' }];
-        emitMultiple();
-      }
-      text.value = '';
-      return;
-    }
     try {
       setUser(BigInt(query));
     } catch {
@@ -188,7 +267,7 @@ async function resolveInput() {
   searching.value = true;
   try {
     // 短 ID 优先尝试解析（仅单选模式）
-    if (!props.multiple && /^\d+$/.test(query)) {
+    if (/^\d+$/.test(query)) {
       try {
         const user = await getCurrentBot().getUserByShortId({
           guild: props.guild,
@@ -204,13 +283,7 @@ async function resolveInput() {
     // 按用户名 / 昵称搜索成员
     const list = await searchGuildMembers(props.guild, query);
     results.value = list;
-    if (props.multiple) {
-      // 多选：仅展示可勾选列表，不直接回填
-      if (list.length === 0) {
-        status.value = 'error';
-        hint.value = '未找到该用户，请检查用户名或改用用户 ID';
-      }
-    } else if (list.length === 0) {
+    if (list.length === 0) {
       status.value = 'error';
       hint.value = '未找到该用户，请检查用户名或改用用户 ID';
     } else if (list.length === 1) {
@@ -235,126 +308,114 @@ async function resolveInput() {
     :validate-trigger='[]'
   >
     <div class='user-field'>
-      <div class='user-search'>
-        <Input
-          :model-value='text'
-          :placeholder='multiple ? "搜索用户名 / 昵称，或输入用户 ID 后回车直接添加" : "搜索用户名 / 昵称，或输入用户 ID"'
-          allow-clear
-          @input='onInput'
-          @press-enter='resolveInput'
-          @clear='() => onInput("")'
-        >
-          <template #prefix>
-            <span class='user-search-icon' aria-hidden='true'>
-              <svg viewBox='0 0 1024 1024' width='15' height='15'>
-                <path fill='currentColor' d='M448 64a384 384 0 0 1 307.2 614.4l219.9 219.9a42.7 42.7 0 0 1-60.4 60.4l-219.9-219.9A384 384 0 1 1 448 64zm0 85.3a298.7 298.7 0 1 0 0 597.4 298.7 298.7 0 0 0 0-597.4z' />
-              </svg>
-            </span>
-          </template>
-        </Input>
-        <Button
-          type='primary'
-          :loading='searching'
-          @click='resolveInput'
-        >
-          搜索
-        </Button>
-      </div>
-
-      <!-- 单选：多个候选时的下拉选择 -->
+      <!-- 多选：Arco Select 多选 + 远程搜索（点开下拉即可逐个勾选） -->
       <Select
-        v-if='!multiple && results.length > 1'
-        class='user-search-select'
-        placeholder='从匹配结果中选择用户'
+        v-if='multiple'
+        class='user-multi-select'
+        :model-value='selectedIds'
+        multiple
         allow-search
+        allow-clear
+        :loading='searching'
+        :max-tag-count='5'
+        :filter-option='false'
+        :placeholder='"搜索用户名 / 昵称，或输入用户 ID"'
         :trigger-props='{ contentClass: "user-search-dropdown" }'
-        @change='onPick'
+        @search='onRemoteSearch'
+        @change='onMultiChange'
       >
         <Option
-          v-for='u in results'
+          v-for='u in optionList'
           :key='u.id'
           :value='u.id'
         >
           <span class='user-search-result'>
             <img
-              v-if='u.avatar'
+              v-show='u.avatar'
               class='user-search-avatar'
               :src='u.avatar'
               :alt='u.name'
             >
             <span class='user-search-meta'>
-              <span>{{ u.name }}</span>
+              <span>{{ u.name || u.username || '未命名用户' }}</span>
               <span class='user-search-id'>{{ u.id }}</span>
             </span>
           </span>
         </Option>
       </Select>
 
-      <!-- 多选：搜索结果逐个勾选 -->
-      <div
-        v-if='multiple && results.length'
-        class='user-checklist'
-      >
-        <div
-          v-for='u in results'
-          :key='u.id'
-          class='user-check-item'
-          :class='{ selected: isSelected(u.id) }'
-          @click='toggleSelect(u)'
-        >
-          <img
-            v-if='u.avatar'
-            class='user-check-avatar'
-            :src='u.avatar'
-            :alt='u.name'
+      <!-- 单选：搜索输入 + 候选下拉 + 已选展示 -->
+      <template v-else>
+        <div class='user-search'>
+          <Input
+            :model-value='text'
+            placeholder='搜索用户名 / 昵称，或输入用户 ID'
+            allow-clear
+            @input='onInput'
+            @press-enter='resolveInput'
+            @clear='() => onInput("")'
           >
-          <div class='user-check-meta'>
-            <span class='user-check-name'>{{ u.name || '未命名用户' }}</span>
-            <span class='user-check-id'>{{ u.id }}</span>
+            <template #prefix>
+              <span class='user-search-icon' aria-hidden='true'>
+                <svg viewBox='0 0 1024 1024' width='15' height='15'>
+                  <path fill='currentColor' d='M448 64a384 384 0 0 1 307.2 614.4l219.9 219.9a42.7 42.7 0 0 1-60.4 60.4l-219.9-219.9A384 384 0 1 1 448 64zm0 85.3a298.7 298.7 0 1 0 0 597.4 298.7 298.7 0 0 0 0-597.4z' />
+                </svg>
+              </span>
+            </template>
+          </Input>
+          <Button
+            type='primary'
+            :loading='searching'
+            @click='resolveInput'
+          >
+            搜索
+          </Button>
+        </div>
+
+        <Select
+          v-if='!multiple && results.length > 1'
+          class='user-search-select'
+          placeholder='从匹配结果中选择用户'
+          allow-search
+          :trigger-props='{ contentClass: "user-search-dropdown" }'
+          @change='onPick'
+        >
+          <Option
+            v-for='u in results'
+            :key='u.id'
+            :value='u.id'
+          >
+            <span class='user-search-result'>
+              <img
+                v-show='u.avatar'
+                class='user-search-avatar'
+                :src='u.avatar'
+                :alt='u.name'
+              >
+              <span class='user-search-meta'>
+                <span>{{ u.name }}</span>
+                <span class='user-search-id'>{{ u.id }}</span>
+              </span>
+            </span>
+          </Option>
+        </Select>
+
+        <div v-if='!multiple && picked' class='user-picked'>
+          <img
+            v-show='picked.avatar'
+            class='user-picked-avatar'
+            :src='picked.avatar'
+            :alt='picked.name'
+          >
+          <div class='user-picked-meta'>
+            <span class='user-picked-name'>{{ picked.name || '已选择用户' }}</span>
+            <span class='user-picked-id'>#{{ picked.id }}</span>
           </div>
-          <span class='user-check-flag'>
-            {{ isSelected(u.id) ? '✓ 已选' : '点击选择' }}
-          </span>
+          <a class='user-picked-clear' @click='onInput("")'>清除</a>
         </div>
-      </div>
+      </template>
 
-      <!-- 单选：已确认的用户 -->
-      <div v-if='!multiple && picked' class='user-picked'>
-        <img
-          v-if='picked.avatar'
-          class='user-picked-avatar'
-          :src='picked.avatar'
-          :alt='picked.name'
-        >
-        <div class='user-picked-meta'>
-          <span class='user-picked-name'>{{ picked.name || '已选择用户' }}</span>
-          <span class='user-picked-id'>#{{ picked.id }}</span>
-        </div>
-        <a class='user-picked-clear' @click='onInput("")'>清除</a>
-      </div>
-
-      <!-- 多选：已选用户标签 -->
-      <div v-if='multiple && selectedUsers.length' class='user-selected-tags'>
-        <span
-          v-for='u in selectedUsers'
-          :key='u.id'
-          class='user-tag'
-        >
-          <img
-            v-if='u.avatar'
-            class='user-tag-avatar'
-            :src='u.avatar'
-            :alt='u.name'
-          >
-          <span class='user-tag-name'>{{ u.name || u.id }}</span>
-          <a
-            class='user-tag-remove'
-            @click='removeSelected(u.id)'
-          >×</a>
-        </span>
-      </div>
-
-      <div v-else-if='hint' class='user-hint'>
+      <div v-if='hint' class='user-hint'>
         {{ hint }}
       </div>
     </div>
@@ -423,36 +484,22 @@ async function resolveInput() {
   border-color: var(--winui-accent) !important;
   box-shadow: 0 0 0 3px rgba(0, 120, 212, .15) !important;
 }
-/* 多选：可勾选结果列表（默认单选体验，点开即可逐个勾选） */
-.user-checklist {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 240px;
-  overflow-y: auto;
-  padding: 4px;
-  border: 1px solid var(--color-border-2);
-  border-radius: 8px;
-  background: var(--color-bg-2);
+/* 多选：Arco Select 多选下拉整体宽度 */
+.user-multi-select {
+  width: 100%;
 }
-.user-check-item {
-  display: flex;
+.user-multi-select :deep(.arco-select-view) {
+  min-height: 38px;
+  border-radius: 6px;
+}
+/* 下拉选项：头像 + 昵称 / ID 两行 */
+.user-search-result {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all .12s;
+  min-width: 0;
 }
-.user-check-item:hover {
-  background: var(--color-fill-1);
-}
-.user-check-item.selected {
-  border-color: rgb(var(--primary-6));
-  background: rgba(var(--primary-6), .08);
-}
-.user-check-avatar {
+.user-search-avatar {
   flex: none;
   width: 28px;
   height: 28px;
@@ -460,13 +507,13 @@ async function resolveInput() {
   object-fit: cover;
   background: var(--color-fill-2);
 }
-.user-check-meta {
+.user-search-meta {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
-.user-check-name {
+.user-search-meta > span:first-child {
   font-size: 13px;
   font-weight: 600;
   color: var(--color-text-1);
@@ -474,60 +521,9 @@ async function resolveInput() {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.user-check-id {
+.user-search-id {
   font-size: 12px;
   color: var(--color-text-3);
-}
-.user-check-flag {
-  margin-left: auto;
-  flex: none;
-  font-size: 12px;
-  color: var(--color-text-3);
-}
-.user-check-item.selected .user-check-flag {
-  color: rgb(var(--primary-6));
-  font-weight: 600;
-}
-/* 多选：已选用户标签 */
-.user-selected-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid rgba(0, 120, 212, .25);
-  border-radius: 8px;
-  background: rgba(0, 120, 212, .06);
-}
-.user-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border: 1px solid var(--color-border-2);
-  border-radius: 16px;
-  background: var(--color-bg-2);
-}
-.user-tag-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.user-tag-name {
-  font-size: 12px;
-  color: var(--color-text-1);
-  max-width: 140px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.user-tag-remove {
-  font-size: 14px;
-  color: var(--color-text-3);
-  cursor: pointer;
-}
-.user-tag-remove:hover {
-  color: rgb(var(--danger-6));
 }
 .user-picked {
   display: flex;
