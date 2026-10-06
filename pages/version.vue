@@ -40,6 +40,8 @@ const vercelProjectUrl = deploy.vercelProjectUrl || '';
 
 /** GitHub 最新提交信息。 */
 const latest = ref(undefined as VersionInfo | undefined);
+/** GitHub 最新提交拉取失败原因。 */
+const latestError = ref('');
 /** 更新检查状态。 */
 const update = ref(undefined as UpdateStatus | undefined);
 /** 是否正在加载 / 检查。 */
@@ -49,10 +51,12 @@ const checking = ref(false);
 /** 加载 GitHub 最新提交信息。 */
 async function loadLatest() {
   loading.value = true;
+  latestError.value = '';
   try {
     latest.value = await getLatestVersion();
-  } catch {
+  } catch (e) {
     latest.value = undefined;
+    latestError.value = e instanceof Error ? e.message : '未知错误';
   } finally {
     loading.value = false;
   }
@@ -87,7 +91,7 @@ onMounted(async () => {
       <FormItem label='当前部署版本'>
         <span class='mono'>{{ currentCommit }}</span>
         <Tag
-          v-if='update'
+          v-if='update && update.ok'
           class='tag'
           :color='update.hasUpdate ? "orange" : "green"'
         >
@@ -96,6 +100,17 @@ onMounted(async () => {
             <IconCheckCircleFill v-else />
           </template>
           {{ update.hasUpdate ? '有更新未部署' : '已是最新' }}
+        </Tag>
+        <Tag
+          v-else-if='update && !update.ok'
+          class='tag'
+          color='red'
+          :title='update.error'
+        >
+          <template #icon>
+            <IconExclamationCircleFill />
+          </template>
+          检查失败
         </Tag>
         <Tag v-else-if='!loading' class='tag' color='gray'>
           <template #icon>
@@ -121,7 +136,9 @@ onMounted(async () => {
             {{ latest.verified ? '已验证' : '未验证' }}
           </Tag>
         </template>
-        <span v-else class='muted'>加载失败</span>
+        <span v-else class='muted' :title='latestError'>
+          加载失败<template v-if='latestError'>（{{ latestError }}）</template>
+        </span>
       </FormItem>
       <FormItem label='最新提交时间'>
         <span v-if='latest'>{{ latest.time.toLocaleString('zh-CN') }}</span>

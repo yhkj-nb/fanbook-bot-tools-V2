@@ -29,7 +29,9 @@ export default defineNuxtPlugin(async () => {
   // 与 GitHub main 最新提交比对，判断是否有新提交尚未部署。
   try {
     const status = await checkUpdate();
-    if (status.hasUpdate) {
+    if (!status.ok) {
+      console.warn(`GitHub 更新检查失败：${status.error ?? '未知错误'}`);
+    } else if (status.hasUpdate) {
       console.warn(`GitHub 已有新提交 ${status.latest} 尚未部署（当前部署：${commit}）`);
     } else if (status.latest) {
       console.info(`已是最新版本（${commit}）`);
