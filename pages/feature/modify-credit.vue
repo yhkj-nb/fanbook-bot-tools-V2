@@ -34,10 +34,11 @@ definePageMeta({
 
 interface Input {
   guild?: bigint;
-  user?: bigint;
+  users: bigint[];
   credit: GuildCredit;
 }
 const input = reactive({
+  users: [] as bigint[],
   credit: {
     id: '',
     authority: {
@@ -64,7 +65,7 @@ const status = ref('default' as Status);
 
 const bot = new Bot(useAccountStore().activeBotToken as string);
 
-/** 该用户当前拥有的全部徽章。 */
+/** 首个选中用户当前拥有的全部徽章。 */
 const credits = ref([] as GuildCredit[]);
 /** 当前选中的徽章 ID（用于高亮与编辑）。 */
 const selectedId = ref('');
@@ -78,14 +79,14 @@ function bigintValidator(value: string, cb: (error?: string) => void) {
   else cb(undefined);
 }
 
-/** 输入服务器 + 用户（短 ID 自动解析后）即可拉取该用户全部徽章及其图片。 */
+/** 输入服务器 + 用户（多选）后，拉取首个用户的全部徽章及其图片。 */
 async function fetchCredits() {
-  if (!input.guild || !input.user) return;
+  if (!input.guild || !input.users.length) return;
   status.value = 'fetching';
   try {
     const res = await bot.getGuildUserCredit({
       guild: input.guild as bigint,
-      user: input.user as bigint,
+      user: input.users[0] as bigint,
     });
     credits.value = res;
     if (res.length === 0) {
@@ -115,43 +116,65 @@ function selectCredit(c: GuildCredit) {
   }
 }
 
-// 服务器 ID 与用户 ID（短 ID 解析后的完整 ID）都就绪后自动拉取
+// 服务器 ID 与用户（多选）就绪后自动拉取首个用户的徽章
 watch(
-  () => [input.guild, input.user],
-  ([g, u]) => {
-    if (g && u) fetchCredits();
+  () => [input.guild, input.users],
+  ([g, us]) => {
+    if (g && us && (us as bigint[]).length) fetchCredits();
   },
 );
 
+/** 批量修改进度。 */
+const progress = reactive({ current: 0, total: 0 });
+
 async function onSubmit() {
   status.value = 'loading';
-  try {
-    await bot.setGuildUserCredit({
-      guild: input.guild,
-      user: input.user as bigint,
-      credit: input.credit,
-    });
-    Message.success({
-      content: '修改勋章成功',
+  const ids = input.users;
+  if (!input.guild || !ids.length) {
+    Message.warning({
+      content: '请至少选择一名目标用户',
       duration: 2500,
     });
-    // 重新拉取，刷新徽章列表与图片
-    await fetchCredits();
-  } catch (err: any) {
-    console.error(err);
-    // 如果错误码在 BotErrorCode 中，则显示错误码对应的错误信息
-    if (err.response?.data?.error_code in BotErrorCode) {
-      Message.error({
-        content: '修改勋章失败：' + BotErrorCode[err.response?.data?.error_code],
-        duration: 6000,
+    status.value = 'default';
+    return;
+  }
+  progress.total = ids.length;
+  progress.current = 0;
+  let ok = 0;
+  let fail = 0;
+  const failures: string[] = [];
+  for (const uid of ids) {
+    progress.current++;
+    try {
+      await bot.setGuildUserCredit({
+        guild: input.guild,
+        user: uid as bigint,
+        credit: input.credit,
       });
-    } else {
-      Message.error({
-        content: '修改勋章失败：' + err.response?.data?.description,
-        duration: 6000,
-      });
+      ok++;
+    } catch (err: any) {
+      fail++;
+      const code = err.response?.data?.error_code;
+      const desc = err.response?.data?.description ?? '未知错误';
+      const msg = (code && BotErrorCode[code]) ? BotErrorCode[code] : desc;
+      if (!failures.includes(msg)) failures.push(msg);
+      console.error(err);
     }
   }
+  progress.current = progress.total;
+  if (fail === 0) {
+    Message.success({
+      content: `已成功修改 ${ok} 个用户的勋章`,
+      duration: 3000,
+    });
+  } else {
+    Message.warning({
+      content: `${ok} 个成功，${fail} 个失败（${failures.slice(0, 2).join('；')}）`,
+      duration: 6000,
+    });
+  }
+  // 重新拉取，刷新徽章列表与图片
+  await fetchCredits();
   status.value = 'default';
 }
 </script>
@@ -160,7 +183,7 @@ async function onSubmit() {
   <Spin
     class='form-wrapper'
     :loading='status === "loading"'
-    tip='正在修改勋章'
+    :tip='progress.total ? `正在修改第 ${progress.current} / ${progress.total} 个用户` : "正在修改勋章"'
   >
     <Form
       class='form'
@@ -175,11 +198,15 @@ async function onSubmit() {
         required
       />
       <UserInputForm
-        v-model='input.user'
+        v-model='input.users'
         :guild='input.guild'
-        field='user'
+        field='users'
+        multiple
         required
       />
+      <div v-if='input.users.length > 1' class='batch-tip'>
+        将把当前编辑的勋章配置应用到所选 {{ input.users.length }} 个用户
+      </div>
 
       <TypographyTitle :heading='4'>该用户的全部徽章</TypographyTitle>
       <div
@@ -352,7 +379,7 @@ async function onSubmit() {
       </FormItem>
     </Form>
   </Spin>
-</template>
+</Template>
 
 <style scoped>
 .form-wrapper {
@@ -365,6 +392,11 @@ body.mobile .form-wrapper {
 }
 .form {
   width: 100%;
+}
+.batch-tip {
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: rgb(var(--danger-6));
 }
 h4 {
   margin-top: 0;

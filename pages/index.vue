@@ -19,6 +19,8 @@ export interface Feature {
   content: string;
   /** 卡片右上角链接。 */
   link: string;
+  /** 卡片角标（如 Beta）。 */
+  tag?: string;
 }
 
 /**
@@ -68,6 +70,7 @@ const features: Array<{
     children: [{
       icon: <IconExclamationCircle size={36} />,
       content: '风险检测',
+      tag: 'Beta',
       link: 'feature/risk-check',
     }],
   },
@@ -83,6 +86,7 @@ const features: Array<{
           class='home-card card inline-flex w-24 h-24 mr-4 cursor-pointer'
           @click='() => $router.push(item.link)'
         >
+          <span v-if='item.tag' class='home-card-tag'>{{ item.tag }}</span>
           <component :is='item.icon' />
           <p class='mb-1 mt-auto'>{{ item.content }}</p>
         </Card>
@@ -103,5 +107,20 @@ const features: Array<{
   @apply inline-flex;
   @apply items-center;
   @apply flex-col;
+}
+.home-card {
+  position: relative;
+}
+.home-card-tag {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: rgb(var(--danger-6));
 }
 </style>

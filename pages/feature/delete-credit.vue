@@ -6,6 +6,8 @@ import type {
 
 import { useAccountStore } from '~~/stores/account';
 
+import { BotErrorCode } from '~/utils/bot';
+
 import {
   Button,
   Form,
@@ -26,10 +28,11 @@ definePageMeta({
 
 interface Input {
   guild?: bigint;
-  user?: bigint;
+  users: bigint[];
   card: string;
 }
 const input = reactive({
+  users: [] as bigint[],
   card: '',
 } as Input);
 
@@ -49,20 +52,16 @@ const credits = ref([] as GuildCredit[]);
 /** 当前在下拉中选中的徽章（用于预览）。 */
 const selectedCredit = computed(() => credits.value.find(c => c.id === input.card));
 
-/** 拉取用户全部徽章，填充下拉选项。 */
+/** 拉取（首个选中）用户全部徽章，填充下拉选项。 */
 async function fetchCredits() {
-  if (!input.guild || !input.user) {
-    Message.warning({
-      content: '请先填写服务器与用户',
-      duration: 2500,
-    });
+  if (!input.guild || !input.users.length) {
     return;
   }
   status.value = 'fetching';
   try {
     const res = await bot.getGuildUserCredit({
       guild: input.guild as bigint,
-      user: input.user as bigint,
+      user: input.users[0] as bigint,
     });
     credits.value = res;
     if (res.length === 0) {
@@ -81,36 +80,66 @@ async function fetchCredits() {
   status.value = 'default';
 }
 
-// 服务器 ID 与用户 ID（短 ID 解析后的完整 ID）都就绪后自动拉取
+// 服务器 ID 与用户（多选）就绪后自动拉取首个用户的勋章
 watch(
-  () => [input.guild, input.user],
-  ([g, u]) => {
-    if (g && u) fetchCredits();
+  () => [input.guild, input.users],
+  ([g, us]) => {
+    if (g && us && (us as bigint[]).length) fetchCredits();
   },
 );
 
+/** 批量删除进度。 */
+const progress = reactive({ current: 0, total: 0 });
+
 async function onSubmit() {
   status.value = 'loading';
-  try {
-    await bot.deleteGuildUserCredit({
-      guild: input.guild as bigint,
-      user: input.user as bigint,
-      card: input.card,
-    });
-    Message.success({
-      content: '删除成功',
+  const ids = input.users;
+  if (!input.guild || !ids.length || !input.card) {
+    Message.warning({
+      content: !input.card ? '请先选择要删除的勋章' : '请至少选择一名目标用户',
       duration: 2500,
     });
-    input.card = '';
-    // 重新拉取，刷新下拉列表
-    await fetchCredits();
-  } catch (err: any) {
-    console.error(err);
-    Message.error({
-      content: '删除失败：' + (err.response?.data?.description ?? '未知错误'),
+    status.value = 'default';
+    return;
+  }
+  progress.total = ids.length;
+  progress.current = 0;
+  let ok = 0;
+  let fail = 0;
+  const failures: string[] = [];
+  for (const uid of ids) {
+    progress.current++;
+    try {
+      await bot.deleteGuildUserCredit({
+        guild: input.guild as bigint,
+        user: uid as bigint,
+        card: input.card,
+      });
+      ok++;
+    } catch (err: any) {
+      fail++;
+      const code = err.response?.data?.error_code;
+      const desc = err.response?.data?.description ?? '未知错误';
+      const msg = (code && BotErrorCode[code]) ? BotErrorCode[code] : desc;
+      if (!failures.includes(msg)) failures.push(msg);
+      console.error(err);
+    }
+  }
+  progress.current = progress.total;
+  if (fail === 0) {
+    Message.success({
+      content: `已成功从 ${ok} 个用户删除`,
+      duration: 3000,
+    });
+  } else {
+    Message.warning({
+      content: `${ok} 个成功，${fail} 个失败（${failures.slice(0, 2).join('；')}）`,
       duration: 6000,
     });
   }
+  input.card = '';
+  // 重新拉取，刷新下拉列表
+  await fetchCredits();
   status.value = 'default';
 }
 </script>
@@ -119,7 +148,7 @@ async function onSubmit() {
   <Spin
     class='form-wrapper'
     :loading='status === "loading"'
-    tip='正在执行'
+    :tip='progress.total ? `正在删除第 ${progress.current} / ${progress.total} 个用户` : "正在执行"'
   >
     <Form
       class='form'
@@ -134,16 +163,17 @@ async function onSubmit() {
         required
       />
       <UserInputForm
-        v-model='input.user'
+        v-model='input.users'
         :guild='input.guild'
-        field='user'
+        field='users'
+        multiple
         required
       />
 
       <FormItem
         label='自定义 ID'
         field='card'
-        tooltip='点击下拉选择要删除的勋章（已自动拉取该用户全部徽章）'
+        tooltip='点击下拉选择要删除的勋章（已自动拉取首个选中用户的全部徽章）'
         :rules='[REQUEIRE_RULE, { minLength: 10, message: "至少10字符" }]'
       >
         <Select
@@ -163,6 +193,9 @@ async function onSubmit() {
           </Option>
         </Select>
       </FormItem>
+      <div v-if='input.users.length > 1' class='batch-tip'>
+        将删除所选 {{ input.users.length }} 个用户中的该勋章
+      </div>
 
       <!-- 徽章预览：选中下拉项后，像「修改勋章」一样实时显示徽章图片与图标 -->
       <template v-if='selectedCredit'>
@@ -239,6 +272,11 @@ body.mobile .form-wrapper {
 }
 .operations {
   margin-top: 4px;
+}
+.batch-tip {
+  margin: -6px 0 10px;
+  font-size: 12px;
+  color: rgb(var(--danger-6));
 }
 h4 {
   margin-top: 0;

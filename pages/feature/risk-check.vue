@@ -96,6 +96,11 @@ async function onCheck() {
       auto-label-width
       @submit-success='onCheck'
     >
+      <div class='beta-banner'>
+        <span class='beta-badge'>Beta</span>
+        <span class='beta-text'>实验性功能：检测结论由服务器身份组权限推算，仅供参考，请以服务器实际设置为准。</span>
+      </div>
+
       <GuildInputForm
         v-model='input.guild'
         field='guild'
@@ -326,5 +331,30 @@ h4 {
   padding: 1px 8px;
   border-radius: 6px;
   border: 1px solid var(--color-border-2);
+}
+.beta-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--danger-6), .3);
+  background: rgba(var(--danger-6), .06);
+}
+.beta-badge {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: rgb(var(--danger-6));
+}
+.beta-text {
+  font-size: 13px;
+  color: var(--color-text-2);
+  line-height: 1.5;
 }
 </style>
