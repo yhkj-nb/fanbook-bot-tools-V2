@@ -7,6 +7,10 @@ import type {
 import { useAccountStore } from '~~/stores/account';
 
 import { BotErrorCode } from '~/utils/bot';
+import {
+  getCredit,
+  saveCredits,
+} from '~/utils/credit-library';
 
 import {
   Button,
@@ -49,8 +53,11 @@ const bot = new Bot(useAccountStore().activeBotToken as string);
 /** 该用户的全部徽章，用于下拉选择。 */
 const credits = ref([] as GuildCredit[]);
 
-/** 当前在下拉中选中的徽章（用于预览）。 */
-const selectedCredit = computed(() => credits.value.find(c => c.id === input.card));
+/** 当前在下拉中选中的徽章（用于预览）；下拉里没有时回退到本地缓存。 */
+const selectedCredit = computed(() =>
+  credits.value.find(c => c.id === input.card)
+  ?? getCredit(input.card)?.credit,
+);
 
 /** 拉取（首个选中）用户全部徽章，填充下拉选项。 */
 async function fetchCredits() {
@@ -64,6 +71,8 @@ async function fetchCredits() {
       user: input.users[0] as bigint,
     });
     credits.value = res;
+    // 把服务器拉取到的完整勋章配置收录进本地勋章库，方便之后快捷修改 / 删除
+    if (res.length) saveCredits(res);
     if (res.length === 0) {
       Message.info({
         content: '该用户暂无任何勋章',
@@ -87,6 +96,21 @@ watch(
     if (g && us && (us as bigint[]).length) fetchCredits();
   },
 );
+
+// 从「勋章列表」点「快捷删除」跳入时，自动带入勋章 ID 并显示预览
+onMounted(() => {
+  const id = String(useRoute().query.creditId ?? '');
+  if (!id) return;
+  input.card = id;
+  const cached = getCredit(id);
+  if (cached && !credits.value.some(c => c.id === id)) {
+    credits.value = [cached.credit, ...credits.value];
+  }
+  Message.info({
+    content: '已带入勋章 ID，选择服务器与目标用户后即可批量删除',
+    duration: 4000,
+  });
+});
 
 /** 批量删除进度。 */
 const progress = reactive({ current: 0, total: 0 });

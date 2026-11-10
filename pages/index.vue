@@ -2,12 +2,16 @@
 import { Card, Row, TypographyTitle } from '@arco-design/web-vue';
 
 import {
+  IconApps,
   IconDelete,
   IconExclamationCircle,
+  IconHeart,
   IconList,
+  IconMessage,
   IconRefresh,
   IconRobot,
   IconSafe,
+  IconSend,
   IconStar,
 } from '@arco-design/web-vue/es/icon';
 
@@ -44,6 +48,23 @@ const features: Array<{
     }],
   },
   {
+    title: '机器人消息',
+    icon: <IconMessage />,
+    children: [{
+      icon: <IconSend size={36} />,
+      content: '发送消息',
+      link: 'feature/send-message',
+    }, {
+      icon: <IconMessage size={36} />,
+      content: '获取消息',
+      link: 'feature/get-messages',
+    }, {
+      icon: <IconHeart size={36} />,
+      content: '消息表态',
+      link: 'feature/react-message',
+    }],
+  },
+  {
     title: '荣誉卡槽',
     icon: <IconStar />,
     children: [{
@@ -62,6 +83,10 @@ const features: Array<{
       icon: <IconRefresh size={36} />,
       content: '修改勋章',
       link: 'feature/modify-credit',
+    }, {
+      icon: <IconApps size={36} />,
+      content: '勋章列表',
+      link: 'feature/credit-library',
     }],
   },
   {

@@ -4,6 +4,7 @@ import type { GuildCredit } from '@starlight-dev-team/fanbook-api-sdk/dist/types
 import { useAccountStore } from '~~/stores/account';
 
 import { tryBigintify } from '~~/utils/util';
+import { saveCredits } from '~/utils/credit-library';
 
 import {
   Button,
@@ -65,6 +66,8 @@ async function onSubmit() {
         guild: input.guild as bigint,
         user: uid as bigint,
       });
+      // 把查询到的完整勋章配置收录进本地勋章库
+      if (res.length) saveCredits(res);
       results.value.push({ user: String(uid), ids: res.map(c => c.id) });
     } catch (err: any) {
       fail++;

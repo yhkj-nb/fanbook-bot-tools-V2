@@ -13,6 +13,12 @@ import { useAccountStore } from '~~/stores/account';
 import { tryBigintify } from '~~/utils/util';
 
 import { BotErrorCode } from '~/utils/bot';
+import {
+  getCredit,
+  saveCredit,
+  saveCredits,
+  updateCredit,
+} from '~/utils/credit-library';
 
 import {
   Button,
@@ -65,6 +71,9 @@ const status = ref('default' as Status);
 
 const bot = new Bot(useAccountStore().activeBotToken as string);
 
+/** 从勋章列表载入的原始缓存 ID（用于编辑后更新原记录）。 */
+const loadedCreditId = ref('');
+
 /** 首个选中用户当前拥有的全部徽章。 */
 const credits = ref([] as GuildCredit[]);
 /** 当前选中的徽章 ID（用于高亮与编辑）。 */
@@ -89,6 +98,8 @@ async function fetchCredits() {
       user: input.users[0] as bigint,
     });
     credits.value = res;
+    // 把服务器拉取到的完整勋章配置收录进本地勋章库，方便之后快捷修改 / 删除
+    if (res.length) saveCredits(res);
     if (res.length === 0) {
       Message.info({
         content: '该用户暂无任何勋章',
@@ -123,6 +134,23 @@ watch(
     if (g && us && (us as bigint[]).length) fetchCredits();
   },
 );
+
+// 从「勋章列表」点「快捷修改」跳入时，自动载入本地缓存的勋章配置
+onMounted(() => {
+  const id = String(useRoute().query.creditId ?? '');
+  if (!id) return;
+  const cached = getCredit(id);
+  if (!cached) {
+    Message.warning('本地缓存中未找到该勋章配置');
+    return;
+  }
+  loadedCreditId.value = id;
+  selectCredit(cached.credit);
+  Message.info({
+    content: '已载入勋章列表中的配置，选择服务器与目标用户后即可批量修改',
+    duration: 4000,
+  });
+});
 
 /** 批量修改进度。 */
 const progress = reactive({ current: 0, total: 0 });
@@ -172,6 +200,12 @@ async function onSubmit() {
       content: `${ok} 个成功，${fail} 个失败（${failures.slice(0, 2).join('；')}）`,
       duration: 6000,
     });
+  }
+  // 同步更新本地勋章库（配置可能已被编辑，ID 也可能改变）
+  if (loadedCreditId.value && updateCredit(loadedCreditId.value, input.credit)) {
+    loadedCreditId.value = input.credit.id;
+  } else {
+    saveCredit(input.credit);
   }
   // 重新拉取，刷新徽章列表与图片
   await fetchCredits();

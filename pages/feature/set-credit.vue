@@ -14,6 +14,7 @@ import { tryBigintify } from '~~/utils/util';
 import {
   BotErrorCode,
 } from '~/utils/bot';
+import { saveCredit } from '~/utils/credit-library';
 
 import {
   Button,
@@ -111,9 +112,11 @@ async function onSubmit() {
     }
   }
   progress.current = progress.total;
+  // 无论成功几个，都把这枚勋章配置收录进浏览器本地勋章库，便于之后快捷修改/删除
+  saveCredit(input.credit);
   if (fail === 0) {
     Message.success({
-      content: `已成功发放给 ${ok} 个用户`,
+      content: `已成功发放给 ${ok} 个用户，勋章配置已保存到列表`,
       duration: 3000,
     });
   } else {
